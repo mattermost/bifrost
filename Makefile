@@ -1,4 +1,4 @@
-.PHONY: build check-style install run test
+.PHONY: build check-style install run test verify-gomod
 
 # Build variables
 COMMIT_HASH  ?= $(shell git rev-parse HEAD)
@@ -41,3 +41,8 @@ check-style:
 
 	@echo Running golangci-lint
 	golangci-lint run ./...
+
+# Check modules
+verify-gomod:
+	$(GO) mod download
+	$(GO) mod verify
