@@ -1,0 +1,18 @@
+# Finder remnants
+.DS_Store
+
+# IDE related files
+.vscode
+.idea
+
+# Miscellaneous files
+debug
+.tmp
+
+# Vim temporary files
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+*~
