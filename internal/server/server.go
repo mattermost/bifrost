@@ -6,11 +6,9 @@ package server
 import (
 	"context"
 	"errors"
-	"fmt"
+	"net"
 	"net/http"
 	"time"
-
-	"github.com/gorilla/mux"
 )
 
 // Version information, assigned by ldflags
@@ -19,19 +17,16 @@ var (
 	BuildDate  string
 )
 
-// Server is the wrapper of http.Server
+// Server contains all the necessary information to run Bifrost
 type Server struct {
-	server *http.Server
+	srv *http.Server
 }
 
 // New creates a new Bifrost server
-func New(port int) *Server {
-	r := mux.NewRouter()
-
+func New(port string) *Server {
 	s := &Server{
-		server: &http.Server{
-			Addr:         fmt.Sprintf("0.0.0.0:%d", port),
-			Handler:      r,
+		srv: &http.Server{
+			Addr:         net.JoinHostPort("0.0.0.0", port),
 			ReadTimeout:  60 * time.Second,
 			WriteTimeout: 60 * time.Second,
 			IdleTimeout:  30 * time.Second,
@@ -43,7 +38,7 @@ func New(port int) *Server {
 
 // Start starts the server
 func (s *Server) Start() error {
-	err := s.server.ListenAndServe()
+	err := s.srv.ListenAndServe()
 	if errors.Is(err, http.ErrServerClosed) {
 		return nil
 	}
@@ -54,5 +49,5 @@ func (s *Server) Start() error {
 func (s *Server) Stop() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	return s.server.Shutdown(ctx)
+	return s.srv.Shutdown(ctx)
 }

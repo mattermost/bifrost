@@ -14,13 +14,13 @@ import (
 )
 
 func main() {
-	var port int
-	flag.IntVar(&port, "port", 8087, "Port number for the http server.")
+	var port string
+	flag.StringVar(&port, "port", "8087", "Port number for the http server.")
 	flag.Parse()
 
 	s := server.New(port)
 	go func() {
-		fmt.Printf("listening on port %d\n", port)
+		fmt.Printf("listening on port %s\n", port)
 		if err := s.Start(); err != nil {
 			fmt.Fprintf(os.Stderr, "could not start the server: %s\n", err)
 			os.Exit(1)
