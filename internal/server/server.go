@@ -7,9 +7,13 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"log"
 	"net"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 // Version information, assigned by ldflags
@@ -20,14 +24,38 @@ var (
 
 // Server contains all the necessary information to run Bifrost
 type Server struct {
-	cfg Config
-	srv *http.Server
+	cfg       Config
+	srv       *http.Server
+	logger    *log.Logger
+	client    *http.Client
+	getHostFn func(bucket, endPoint string) string
+	creds     *credentials.Credentials
 }
 
 // New creates a new Bifrost server
 func New(cfg Config) *Server {
+	// All settings are same as DefaultTransport,
+	// with MaxConnsPerHost and ResponseHeaderTimeout added.
+	client := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+				DualStack: true,
+			}).DialContext,
+			ForceAttemptHTTP2:     true,
+			MaxConnsPerHost:       cfg.ServiceSettings.MaxConnsPerHost,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ResponseHeaderTimeout: 30 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		},
+	}
+
 	server := &http.Server{
-		Addr:         net.JoinHostPort("0.0.0.0", cfg.ServiceSettings.Port),
+		Addr:         cfg.ServiceSettings.Host,
 		ReadTimeout:  60 * time.Second,
 		WriteTimeout: 60 * time.Second,
 		IdleTimeout:  30 * time.Second,
@@ -41,14 +69,22 @@ func New(cfg Config) *Server {
 	}
 
 	s := &Server{
-		cfg: cfg,
-		srv: server,
+		srv:    server,
+		client: client,
+		logger: log.New(os.Stderr, "[bifrost] ", log.Lshortfile|log.LstdFlags),
+		cfg:    cfg,
+		creds:  credentials.NewStatic(cfg.S3Settings.AccessKeyID, cfg.S3Settings.SecretAccessKey, "", credentials.SignatureV4),
 	}
+
+	s.getHostFn = s.getHost
+	s.srv.Handler = s.handler()
+
 	return s
 }
 
 // Start starts the server
 func (s *Server) Start() error {
+	s.logger.Println("Listening on ", s.cfg.ServiceSettings.Host)
 	var err error
 	if s.cfg.ServiceSettings.TLSCertFile != "" && s.cfg.ServiceSettings.TLSKeyFile != "" {
 		err = s.srv.ListenAndServeTLS(s.cfg.ServiceSettings.TLSCertFile, s.cfg.ServiceSettings.TLSKeyFile)
