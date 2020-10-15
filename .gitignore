@@ -16,3 +16,6 @@ debug
 Session.vim
 .netrwhist
 *~
+
+# Ignore config.json
+config/config.json

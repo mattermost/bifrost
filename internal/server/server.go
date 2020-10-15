@@ -5,6 +5,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"net"
 	"net/http"
@@ -19,26 +20,42 @@ var (
 
 // Server contains all the necessary information to run Bifrost
 type Server struct {
+	cfg Config
 	srv *http.Server
 }
 
 // New creates a new Bifrost server
-func New(port string) *Server {
-	s := &Server{
-		srv: &http.Server{
-			Addr:         net.JoinHostPort("0.0.0.0", port),
-			ReadTimeout:  60 * time.Second,
-			WriteTimeout: 60 * time.Second,
-			IdleTimeout:  30 * time.Second,
+func New(cfg Config) *Server {
+	server := &http.Server{
+		Addr:         net.JoinHostPort("0.0.0.0", cfg.ServiceSettings.Port),
+		ReadTimeout:  60 * time.Second,
+		WriteTimeout: 60 * time.Second,
+		IdleTimeout:  30 * time.Second,
+		TLSConfig: &tls.Config{
+			MinVersion:               tls.VersionTLS12,
+			PreferServerCipherSuites: true,
+			CurvePreferences: []tls.CurveID{
+				tls.CurveP256,
+			},
 		},
 	}
 
+	s := &Server{
+		cfg: cfg,
+		srv: server,
+	}
 	return s
 }
 
 // Start starts the server
 func (s *Server) Start() error {
-	err := s.srv.ListenAndServe()
+	var err error
+	if s.cfg.ServiceSettings.TLSCertFile != "" && s.cfg.ServiceSettings.TLSKeyFile != "" {
+		err = s.srv.ListenAndServeTLS(s.cfg.ServiceSettings.TLSCertFile, s.cfg.ServiceSettings.TLSKeyFile)
+	} else {
+		err = s.srv.ListenAndServe()
+	}
+
 	if errors.Is(err, http.ErrServerClosed) {
 		return nil
 	}
