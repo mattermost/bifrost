@@ -14,13 +14,19 @@ import (
 )
 
 func main() {
-	var port string
-	flag.StringVar(&port, "port", "8087", "Port number for the http server.")
+	var configFile string
+	flag.StringVar(&configFile, "config", "config/config.json", "Configuration file for the Bifrost service.")
 	flag.Parse()
 
-	s := server.New(port)
+	config, err := server.ParseConfig(configFile)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "could not parse config file: %s\n", err)
+		os.Exit(1)
+	}
+
+	s := server.New(config)
 	go func() {
-		fmt.Printf("listening on port %s\n", port)
+		fmt.Printf("listening on port %s\n", config.ServiceSettings.Port)
 		if err := s.Start(); err != nil {
 			fmt.Fprintf(os.Stderr, "could not start the server: %s\n", err)
 			os.Exit(1)
