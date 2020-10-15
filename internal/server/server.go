@@ -20,7 +20,7 @@ var (
 
 // Server contains all the necessary information to run Bifrost
 type Server struct {
-	cfg *Config
+	cfg Config
 	srv *http.Server
 }
 
@@ -31,18 +31,17 @@ func New(cfg Config) *Server {
 		ReadTimeout:  60 * time.Second,
 		WriteTimeout: 60 * time.Second,
 		IdleTimeout:  30 * time.Second,
-	}
-
-	server.TLSConfig = &tls.Config{
-		MinVersion:               tls.VersionTLS12,
-		PreferServerCipherSuites: true,
-		CurvePreferences: []tls.CurveID{
-			tls.CurveP256,
+		TLSConfig: &tls.Config{
+			MinVersion:               tls.VersionTLS12,
+			PreferServerCipherSuites: true,
+			CurvePreferences: []tls.CurveID{
+				tls.CurveP256,
+			},
 		},
 	}
 
 	s := &Server{
-		cfg: &cfg,
+		cfg: cfg,
 		srv: server,
 	}
 	return s

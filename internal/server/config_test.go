@@ -39,7 +39,24 @@ func TestParseConfig(t *testing.T) {
 	t.Run("should be able to read a valid json file", func(t *testing.T) {
 		f := filepath.Join(dir, "valid.json")
 		err = ioutil.WriteFile(f, []byte("{}\n"), 0644)
-		_, err := ParseConfig(f)
+		_, err = ParseConfig(f)
 		require.NoError(t, err)
+	})
+
+	t.Run("should be able to read a valid json file", func(t *testing.T) {
+		f := filepath.Join(dir, "valid.json")
+		err = ioutil.WriteFile(f, []byte(`{
+			"ServiceSettings": {
+				"Port": "8087",
+				"TLSCertFile": ""
+			}
+		}
+		`), 0644)
+		os.Setenv("BIFROST_SERVICE_SETTINGS_PORT", "8099")
+		os.Setenv("BIFROST_SERVICE_SETTINGS_TLS_CERT_FILE", "/home/test/file.cert")
+		cfg, err := ParseConfig(f)
+		require.NoError(t, err)
+		require.Equal(t, cfg.ServiceSettings.Port, "8099")
+		require.Equal(t, cfg.ServiceSettings.TLSCertFile, "/home/test/file.cert")
 	})
 }

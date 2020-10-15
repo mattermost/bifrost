@@ -11,7 +11,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
-// Config is the configration for a bifrost server.
+// Config is the configuration for a bifrost server.
 type Config struct {
 	ServiceSettings ServiceSettings  `split_words:"true"`
 	S3Settings      AmazonS3Settings `split_words:"true"`
