@@ -13,8 +13,8 @@ import (
 
 // Config is the configration for a bifrost server.
 type Config struct {
-	ServiceSettings *ServiceSettings  `split_words:"true"`
-	S3Settings      *AmazonS3Settings `split_words:"true"`
+	ServiceSettings ServiceSettings  `split_words:"true"`
+	S3Settings      AmazonS3Settings `split_words:"true"`
 }
 
 // ServiceSettings is the configuration related to the web server.
@@ -39,22 +39,22 @@ type AmazonS3Settings struct {
 // ParseConfig reads the config file and returns a new *Config,
 // This method overrides values in the file if there is any environment
 // variables corresponding to a specific setting.
-func ParseConfig(path string) (*Config, error) {
+func ParseConfig(path string) (Config, error) {
+	var cfg Config
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("could not open file: %w", err)
+		return cfg, fmt.Errorf("could not open file: %w", err)
 	}
 	defer file.Close()
 
-	var cfg Config
 	err = json.NewDecoder(file).Decode(&cfg)
 	if err != nil {
-		return nil, fmt.Errorf("could not decode file: %w", err)
+		return cfg, fmt.Errorf("could not decode file: %w", err)
 	}
 
 	if err = envconfig.Process("bifrost", &cfg); err != nil {
-		return nil, err
+		return cfg, err
 	}
 
-	return &cfg, nil
+	return cfg, nil
 }
