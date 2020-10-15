@@ -43,7 +43,7 @@ func TestParseConfig(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("should be able to read a valid json file", func(t *testing.T) {
+	t.Run("should be able to read a valid json file and override with env. var.", func(t *testing.T) {
 		f := filepath.Join(dir, "valid.json")
 		err = ioutil.WriteFile(f, []byte(`{
 			"ServiceSettings": {
