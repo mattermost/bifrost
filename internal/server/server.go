@@ -9,6 +9,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -85,7 +86,7 @@ func New(cfg Config) *Server {
 	}
 
 	s.getHostFn = s.getHost
-	s.srv.Handler = s.handler()
+	s.srv.Handler = s.withRecovery(s.handler())
 
 	return s
 }
@@ -111,4 +112,18 @@ func (s *Server) Stop() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	return s.srv.Shutdown(ctx)
+}
+
+func (s *Server) withRecovery(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if x := recover(); x != nil {
+				s.logger.Error("recovered from a panic",
+					mlog.String("url", r.URL.String()),
+					mlog.Any("error", x),
+					mlog.String("stack", string(debug.Stack())))
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
 }
