@@ -15,6 +15,7 @@ import (
 type Config struct {
 	ServiceSettings ServiceSettings  `split_words:"true"`
 	S3Settings      AmazonS3Settings `split_words:"true"`
+	LogSettings     LogSettings      `split_words:"true"`
 }
 
 // ServiceSettings is the configuration related to the web server.
@@ -34,6 +35,17 @@ type AmazonS3Settings struct {
 	Region          string
 	Endpoint        string
 	Scheme          string
+}
+
+// LogSettings is the configuration for the logger.
+type LogSettings struct {
+	EnableConsole bool   `split_words:"true"`
+	ConsoleLevel  string `split_words:"true"`
+	ConsoleJSON   bool   `split_words:"true" json:"ConsoleJson"`
+	EnableFile    bool   `split_words:"true"`
+	FileLevel     string `split_words:"true"`
+	FileJSON      bool   `split_words:"true" json:"FileJson"`
+	FileLocation  string `split_words:"true"`
 }
 
 // ParseConfig reads the config file and returns a new *Config,

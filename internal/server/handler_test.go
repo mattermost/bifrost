@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,6 +15,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/mattermost/mattermost-server/v5/mlog"
 
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/stretchr/testify/assert"
@@ -78,7 +79,7 @@ func TestHandler(t *testing.T) {
 	}
 
 	s := &Server{
-		logger:    log.New(os.Stderr, "", log.Lshortfile|log.LstdFlags),
+		logger:    mlog.NewTestingLogger(t, os.Stderr),
 		cfg:       cfg,
 		getHostFn: dummyGetHost,
 		client:    http.DefaultClient,
@@ -119,7 +120,7 @@ func TestWriteError(t *testing.T) {
 	}
 
 	s := &Server{
-		logger: log.New(os.Stderr, "", log.Lshortfile|log.LstdFlags),
+		logger: mlog.NewTestingLogger(t, os.Stderr),
 		cfg:    cfg,
 	}
 

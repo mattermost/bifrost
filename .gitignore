@@ -19,3 +19,6 @@ Session.vim
 
 # Ignore config.json
 config/config.json
+
+# Ignore log file
+bifrost.log
