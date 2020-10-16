@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/mattermost/mattermost-server/v5/mlog"
-
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/mattermost/mattermost-server/v5/mlog"
-
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
