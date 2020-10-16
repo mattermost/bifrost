@@ -7,12 +7,12 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"log"
 	"net"
 	"net/http"
-	"os"
+	"strings"
 	"time"
 
+	"github.com/mattermost/mattermost-server/v5/mlog"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
@@ -26,7 +26,7 @@ var (
 type Server struct {
 	cfg       Config
 	srv       *http.Server
-	logger    *log.Logger
+	logger    *mlog.Logger
 	client    *http.Client
 	getHostFn func(bucket, endPoint string) string
 	creds     *credentials.Credentials
@@ -71,9 +71,17 @@ func New(cfg Config) *Server {
 	s := &Server{
 		srv:    server,
 		client: client,
-		logger: log.New(os.Stderr, "[bifrost] ", log.Lshortfile|log.LstdFlags),
-		cfg:    cfg,
-		creds:  credentials.NewStatic(cfg.S3Settings.AccessKeyID, cfg.S3Settings.SecretAccessKey, "", credentials.SignatureV4),
+		logger: mlog.NewLogger(&mlog.LoggerConfiguration{
+			ConsoleJson:   cfg.LogSettings.ConsoleJSON,
+			ConsoleLevel:  strings.ToLower(cfg.LogSettings.ConsoleLevel),
+			EnableConsole: cfg.LogSettings.EnableConsole,
+			EnableFile:    cfg.LogSettings.EnableFile,
+			FileJson:      cfg.LogSettings.FileJSON,
+			FileLevel:     strings.ToLower(cfg.LogSettings.FileLevel),
+			FileLocation:  cfg.LogSettings.FileLocation,
+		}),
+		cfg:   cfg,
+		creds: credentials.NewStatic(cfg.S3Settings.AccessKeyID, cfg.S3Settings.SecretAccessKey, "", credentials.SignatureV4),
 	}
 
 	s.getHostFn = s.getHost
@@ -84,7 +92,7 @@ func New(cfg Config) *Server {
 
 // Start starts the server
 func (s *Server) Start() error {
-	s.logger.Println("Listening on ", s.cfg.ServiceSettings.Host)
+	s.logger.Info("server started", mlog.String("host", s.cfg.ServiceSettings.Host))
 	var err error
 	if s.cfg.ServiceSettings.TLSCertFile != "" && s.cfg.ServiceSettings.TLSKeyFile != "" {
 		err = s.srv.ListenAndServeTLS(s.cfg.ServiceSettings.TLSCertFile, s.cfg.ServiceSettings.TLSKeyFile)

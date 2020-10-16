@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mattermost/mattermost-server/v5/mlog"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/signer"
 )
@@ -31,7 +32,7 @@ func (s *Server) handler() http.HandlerFunc {
 		// Stripping the bucket name from the path which gets added by Minio
 		// if the S3 hostname does not match a URL pattern.
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/"+s.cfg.S3Settings.Bucket)
-		s.logger.Println(r.Method, r.URL.String())
+		s.logger.Debug("received request", mlog.String("method", r.Method), mlog.String("url", r.URL.String()))
 
 		// Get credentials.
 		val, err := s.creds.Get()
@@ -61,7 +62,7 @@ func (s *Server) handler() http.HandlerFunc {
 
 		_, err = io.Copy(w, resp.Body)
 		if err != nil {
-			s.logger.Println(err)
+			s.logger.Error("failed to copy response body", mlog.Err(err))
 		}
 	}
 }
@@ -71,7 +72,7 @@ func (s *Server) getHost(bucket, endPoint string) string {
 }
 
 func (s *Server) writeError(w http.ResponseWriter, sourceErr error) {
-	s.logger.Println(sourceErr)
+	s.logger.Error("error", mlog.Err(sourceErr))
 
 	resp := minio.ErrorResponse{
 		Code:       strconv.Itoa(http.StatusInternalServerError),
@@ -83,12 +84,12 @@ func (s *Server) writeError(w http.ResponseWriter, sourceErr error) {
 	buf.WriteString(xml.Header)
 	err := xml.NewEncoder(&buf).Encode(resp)
 	if err != nil {
-		s.logger.Println(err)
+		s.logger.Error("failed to encode error body", mlog.Err(err))
 		return
 	}
 	w.WriteHeader(http.StatusInternalServerError)
 	_, err = w.Write(buf.Bytes())
 	if err != nil {
-		s.logger.Println(err)
+		s.logger.Error("failed to write error response", mlog.Err(err))
 	}
 }
