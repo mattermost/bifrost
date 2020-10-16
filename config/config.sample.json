@@ -1,6 +1,6 @@
 {
     "ServiceSettings": {
-        "Port": "8087",
+        "Host": "localhost:8087",
         "TLSCertFile": "",
         "TLSKeyFile": "",
         "MaxConnsPerHost": 500,

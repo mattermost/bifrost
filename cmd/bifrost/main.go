@@ -26,7 +26,6 @@ func main() {
 
 	s := server.New(config)
 	go func() {
-		fmt.Printf("listening on port %s\n", config.ServiceSettings.Port)
 		if err := s.Start(); err != nil {
 			fmt.Fprintf(os.Stderr, "could not start the server: %s\n", err)
 			os.Exit(1)
