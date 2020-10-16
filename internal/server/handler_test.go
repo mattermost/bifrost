@@ -4,6 +4,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -103,4 +104,35 @@ func TestHandler(t *testing.T) {
 	assert.Equal(t, "reqId", resp.Header.Get("X-Amz-Request-Id"), "unexpected request id")
 	assert.NotEmpty(t, resp.Header.Get("Date"), "empty date")
 	assert.NotEmpty(t, resp.Header.Get("Last-Modified"), "empty last-modified")
+}
+
+func TestWriteError(t *testing.T) {
+	cfg := Config{
+		S3Settings: AmazonS3Settings{
+			AccessKeyID:     "AKIA2AccessKey",
+			SecretAccessKey: "start/secretkey/end",
+			Region:          "us-east-1",
+			Endpoint:        "s3.dualstack.us-east-1.amazonaws.com",
+			Scheme:          "http",
+			Bucket:          "agnivatest",
+		},
+	}
+
+	s := &Server{
+		logger: log.New(os.Stderr, "", log.Lshortfile|log.LstdFlags),
+		cfg:    cfg,
+	}
+
+	w := httptest.NewRecorder()
+
+	s.writeError(w, errors.New("error from valhalla"))
+	resp := w.Result()
+	defer resp.Body.Close()
+
+	buf, err := ioutil.ReadAll(resp.Body)
+	require.NoError(t, err, "unexpected error while reading body")
+
+	expected := `<?xml version="1.0" encoding="UTF-8"?>
+<Error><Code>500</Code><Message>error from valhalla</Message><BucketName>agnivatest</BucketName><Key></Key><RequestId></RequestId><HostId></HostId><Region></Region><Server></Server></Error>`
+	assert.Equal(t, expected, string(buf), "unexpected response")
 }
