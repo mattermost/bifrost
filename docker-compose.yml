@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  bifrost:
+    image: mattermost/bifrost
+    restart: always
+    ports:
+        - "8087:8087"
+        - "8099:8099"
+    command: --config ./config/config.json
