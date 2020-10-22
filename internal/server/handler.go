@@ -40,7 +40,7 @@ func (s *Server) handler() http.HandlerFunc {
 			s.writeError(w, err)
 			return
 		}
-		// TODO: do streaming sign for PUT requests
+
 		// Need to sign the header, just before sending it
 		r = signer.SignV4(*r, s.cfg.S3Settings.AccessKeyID,
 			s.cfg.S3Settings.SecretAccessKey,
@@ -55,9 +55,8 @@ func (s *Server) handler() http.HandlerFunc {
 		defer resp.Body.Close()
 
 		// We copy over the response headers
-		for _, h := range []string{"Content-Type", "Date", "Etag", "Last-Modified", "Server",
-			"X-Amz-Bucket-Region", "X-Amz-Id-2", "X-Amz-Request-Id"} {
-			w.Header().Set(h, resp.Header.Get(h))
+		for key, value := range resp.Header {
+			w.Header().Set(key, strings.Join(value, ", "))
 		}
 
 		_, err = io.Copy(w, resp.Body)
