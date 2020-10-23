@@ -20,6 +20,11 @@ build:
 	@echo Default build Linux amd64
 	env GOOS=linux GOARCH=amd64 $(GO) build -ldflags $(LDFLAGS) -o $(APPNAME) ./cmd/$(APP)
 
+# Builds the docker image
+docker: build
+	docker build -t mattermost/$(APPNAME) .
+	rm -f $(APPNAME)
+
 # Build and install for the current platform
 install:
 	$(GO) install -ldflags $(LDFLAGS) ./cmd/$(APP)
