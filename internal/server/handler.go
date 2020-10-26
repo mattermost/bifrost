@@ -61,7 +61,7 @@ func (s *Server) handler() http.HandlerFunc {
 
 		_, err = io.Copy(w, resp.Body)
 		if err != nil {
-			s.logger.Error("failed to copy response body", mlog.Err(err))
+			s.logger.Warn("failed to copy response body", mlog.Err(err))
 		}
 	}
 }
@@ -89,6 +89,6 @@ func (s *Server) writeError(w http.ResponseWriter, sourceErr error) {
 	w.WriteHeader(http.StatusInternalServerError)
 	_, err = w.Write(buf.Bytes())
 	if err != nil {
-		s.logger.Error("failed to write error response", mlog.Err(err))
+		s.logger.Warn("failed to write error response", mlog.Err(err))
 	}
 }
