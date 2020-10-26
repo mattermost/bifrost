@@ -21,6 +21,7 @@ type Config struct {
 // ServiceSettings is the configuration related to the web server.
 type ServiceSettings struct {
 	Host                  string
+	HealthHost            string `split_words:"true"`
 	TLSCertFile           string `split_words:"true"`
 	TLSKeyFile            string `split_words:"true"`
 	MaxConnsPerHost       int    `split_words:"true"`

@@ -1,6 +1,7 @@
 {
     "ServiceSettings": {
         "Host": "localhost:8087",
+        "HealthHost": "localhost:8099",
         "TLSCertFile": "",
         "TLSKeyFile": "",
         "MaxConnsPerHost": 500,
