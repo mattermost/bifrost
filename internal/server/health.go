@@ -19,7 +19,7 @@ func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewEncoder(w).Encode(healthResponse{CommitHash: CommitHash, BuildDate: BuildDate})
 	if err != nil {
 		s.logger.Error("failed to write health response", mlog.Err(err))
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, "failed to write health response", http.StatusInternalServerError)
 		return
 	}
 }
