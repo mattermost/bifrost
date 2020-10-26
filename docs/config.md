@@ -8,13 +8,13 @@ ServiceSettings is the configuration related to the web server.
 
 *string*
 
-The URL that a Mattermost instance will use as S3 endpoint. The port number is required.
+The hostname and port that a Mattermost instance will use as S3 endpoint. The port number is required.
 
 ### HealthHost
 
 *string*
 
-The URL that will be used by K8s so that it can ping this endpoint to know the state of the server.
+The hostname and port that will be used by K8s so that it can ping this endpoint to know the state of the server.
 
 ### TLSCertFile
 
@@ -42,25 +42,25 @@ Specifies the amount of time to wait for a server's response headers after fully
 
 ## S3Settings
 
-Settings related to S3-compatible object storage instance. E.g. Amazon S3, Minio etc.
+Settings related to S3-compatible object storage instance.
 
 ### AccessKeyId
 
 *string*
 
-This is required for access Minio/S3 instance.
+This is required for access the S3 instance.
 
 ### SecretAccessKey
 
 *string*
 
-The secret access key associated with your Minio/S3 Access Key ID.
+The secret access key associated with your S3 Access Key ID.
 
 ### Bucket
 
 *string*
 
-The name of the bucket for Minio/S3 instance.
+The name of the bucket for the S3 instance.
 
 ### Region
 
@@ -72,13 +72,13 @@ The AWS region you selected when creating your S3 bucket.
 
 *string*
 
-Hostname of your Minio/S3 instance.
+Hostname of your S3 instance.
 
 ### Scheme
 
 *string*
 
-Protocol scheme with the Minio/S3 instance.
+Protocol scheme with the S3 instance.
 
 ## LogSettings
 
