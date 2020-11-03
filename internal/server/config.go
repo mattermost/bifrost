@@ -13,25 +13,25 @@ import (
 
 // Config is the configuration for a bifrost server.
 type Config struct {
-	ServiceSettings ServiceSettings  `split_words:"true"`
-	S3Settings      AmazonS3Settings `split_words:"true"`
-	LogSettings     LogSettings      `split_words:"true"`
+	ServiceSettings ServiceSettings
+	S3Settings      AmazonS3Settings
+	LogSettings     LogSettings
 }
 
 // ServiceSettings is the configuration related to the web server.
 type ServiceSettings struct {
 	Host                  string
-	HealthHost            string `split_words:"true"`
-	TLSCertFile           string `split_words:"true"`
-	TLSKeyFile            string `split_words:"true"`
-	MaxConnsPerHost       int    `split_words:"true"`
-	ResponseHeaderTimeout int    `split_words:"true"`
+	HealthHost            string
+	TLSCertFile           string
+	TLSKeyFile            string
+	MaxConnsPerHost       int
+	ResponseHeaderTimeout int
 }
 
 // AmazonS3Settings is the configuration related to the Amazon S3.
 type AmazonS3Settings struct {
-	AccessKeyID     string `split_words:"true"`
-	SecretAccessKey string `split_words:"true"`
+	AccessKeyID     string
+	SecretAccessKey string
 	Bucket          string
 	Region          string
 	Endpoint        string
@@ -40,13 +40,13 @@ type AmazonS3Settings struct {
 
 // LogSettings is the configuration for the logger.
 type LogSettings struct {
-	EnableConsole bool   `split_words:"true"`
-	ConsoleLevel  string `split_words:"true"`
-	ConsoleJSON   bool   `split_words:"true" json:"ConsoleJson"`
-	EnableFile    bool   `split_words:"true"`
-	FileLevel     string `split_words:"true"`
-	FileJSON      bool   `split_words:"true" json:"FileJson"`
-	FileLocation  string `split_words:"true"`
+	EnableConsole bool
+	ConsoleLevel  string
+	ConsoleJSON   bool `json:"ConsoleJson"`
+	EnableFile    bool
+	FileLevel     string
+	FileJSON      bool `json:"FileJson"`
+	FileLocation  string
 }
 
 // ParseConfig reads the config file and returns a new *Config,

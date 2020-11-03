@@ -52,8 +52,8 @@ func TestParseConfig(t *testing.T) {
 			}
 		}
 		`), 0644)
-		os.Setenv("BIFROST_SERVICE_SETTINGS_HOST", "localhost:8099")
-		os.Setenv("BIFROST_SERVICE_SETTINGS_TLS_CERT_FILE", "/home/test/file.cert")
+		os.Setenv("BIFROST_SERVICESETTINGS_HOST", "localhost:8099")
+		os.Setenv("BIFROST_SERVICESETTINGS_TLSCERTFILE", "/home/test/file.cert")
 		cfg, err := ParseConfig(f)
 		require.NoError(t, err)
 		require.Equal(t, cfg.ServiceSettings.Host, "localhost:8099")
