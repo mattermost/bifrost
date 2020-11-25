@@ -21,7 +21,7 @@ build:
 	env GOOS=linux GOARCH=amd64 $(GO) build -ldflags $(LDFLAGS) -o $(APPNAME) ./cmd/$(APP)
 
 # Builds the docker image
-docker: build
+docker:
 	docker build -t mattermost/$(APPNAME) .
 	rm -f $(APPNAME)
 
