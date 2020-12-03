@@ -34,6 +34,7 @@ type Server struct {
 	client    *http.Client
 	getHostFn func(bucket, endPoint string) string
 	creds     *credentials.Credentials
+	metrics   *metrics
 }
 
 // New creates a new Bifrost server
@@ -94,13 +95,15 @@ func New(cfg Config) *Server {
 			FileLevel:     strings.ToLower(cfg.LogSettings.FileLevel),
 			FileLocation:  cfg.LogSettings.FileLocation,
 		}),
-		cfg:   cfg,
-		creds: credentials.NewStatic(cfg.S3Settings.AccessKeyID, cfg.S3Settings.SecretAccessKey, "", credentials.SignatureV4),
+		cfg:     cfg,
+		creds:   credentials.NewStatic(cfg.S3Settings.AccessKeyID, cfg.S3Settings.SecretAccessKey, "", credentials.SignatureV4),
+		metrics: newMetrics(),
 	}
 
 	s.getHostFn = s.getHost
 	s.srv.Handler = s.withRecovery(s.handler())
 	healthMux.HandleFunc("/health", s.healthHandler).Methods("GET")
+	healthMux.Handle("/metrics", s.metrics.metricsHandler())
 
 	return s
 }

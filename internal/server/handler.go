@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mattermost/mattermost-server/v5/mlog"
 	"github.com/minio/minio-go/v7"
@@ -24,6 +25,12 @@ func (s *Server) handler() http.HandlerFunc {
 	host := s.getHostFn(s.cfg.S3Settings.Bucket, s.cfg.S3Settings.Endpoint)
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		var installationID string
+		if s := strings.Split(r.URL.Path, "/"); len(s) > 1 {
+			installationID = s[1]
+		}
+
 		r.URL.Scheme = s.cfg.S3Settings.Scheme
 		r.URL.Host = host
 		r.Host = host
@@ -59,10 +66,12 @@ func (s *Server) handler() http.HandlerFunc {
 			w.Header().Set(key, strings.Join(value, ", "))
 		}
 
-		_, err = io.Copy(w, resp.Body)
+		n, err := io.Copy(w, resp.Body)
 		if err != nil {
 			s.logger.Warn("failed to copy response body", mlog.Err(err))
 		}
+		elapsed := float64(time.Since(start)) / float64(time.Second)
+		s.metrics.observeRequest(r.URL.Path, r.Method, installationID, resp.StatusCode, n, elapsed)
 	}
 }
 

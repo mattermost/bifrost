@@ -84,6 +84,7 @@ func TestHandler(t *testing.T) {
 		client:    http.DefaultClient,
 		creds: credentials.NewStatic(cfg.S3Settings.AccessKeyID,
 			cfg.S3Settings.SecretAccessKey, "", credentials.SignatureV4),
+		metrics: newMetrics(),
 	}
 
 	req := httptest.NewRequest("GET", "http://example.com/"+cfg.S3Settings.Bucket+"/foo", nil)
