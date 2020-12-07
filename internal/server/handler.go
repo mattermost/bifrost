@@ -26,7 +26,14 @@ func (s *Server) handler() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		var installationID string
+		var installationID, path string
+		var elapsed float64
+		var n int64
+		statusCode := -1
+		defer func() {
+			s.metrics.observeRequest(path, r.Method, installationID, statusCode, n, elapsed)
+		}()
+
 		if s := strings.Split(r.URL.Path, "/"); len(s) > 1 {
 			installationID = s[1]
 		}
@@ -39,6 +46,7 @@ func (s *Server) handler() http.HandlerFunc {
 		// Stripping the bucket name from the path which gets added by Minio
 		// if the S3 hostname does not match a URL pattern.
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/"+s.cfg.S3Settings.Bucket)
+		path = r.URL.Path
 		s.logger.Debug("received request", mlog.String("method", r.Method), mlog.String("url", r.URL.String()))
 
 		// Get credentials.
@@ -60,18 +68,18 @@ func (s *Server) handler() http.HandlerFunc {
 			return
 		}
 		defer resp.Body.Close()
+		statusCode = resp.StatusCode
 
 		// We copy over the response headers
 		for key, value := range resp.Header {
 			w.Header().Set(key, strings.Join(value, ", "))
 		}
 
-		n, err := io.Copy(w, resp.Body)
+		n, err = io.Copy(w, resp.Body)
 		if err != nil {
 			s.logger.Warn("failed to copy response body", mlog.Err(err))
 		}
-		elapsed := float64(time.Since(start)) / float64(time.Second)
-		s.metrics.observeRequest(r.URL.Path, r.Method, installationID, resp.StatusCode, n, elapsed)
+		elapsed = float64(time.Since(start)) / float64(time.Second)
 	}
 }
 

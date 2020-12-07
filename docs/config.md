@@ -10,11 +10,11 @@ ServiceSettings is the configuration related to the web server.
 
 The hostname and port that a Mattermost instance will use as S3 endpoint. The port number is required.
 
-### HealthHost
+### ServiceHost
 
 *string*
 
-The hostname and port that will be used by K8s so that it can ping this endpoint to know the state of the server.
+The hostname and port that will be used by K8s and prometheus so that they can get required information from the server.
 
 ### TLSCertFile
 

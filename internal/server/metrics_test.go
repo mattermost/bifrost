@@ -15,8 +15,8 @@ func TestMetrics(t *testing.T) {
 	metrics := newMetrics()
 	server := New(Config{
 		ServiceSettings: ServiceSettings{
-			Host:       "localhost:12345",
-			HealthHost: "localhost:12346",
+			Host:        "localhost:12345",
+			ServiceHost: "localhost:12346",
 		},
 	})
 

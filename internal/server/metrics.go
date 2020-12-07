@@ -56,10 +56,10 @@ func (m *metrics) observeRequest(path, method, installationID string, statusCode
 }
 
 // metricsHandler returns the handler that is going to be used by the
-// health server to expose the metrics.
+// service to expose the metrics.
 func (m *metrics) metricsHandler() http.Handler {
 	return promhttp.HandlerFor(m.registry, promhttp.HandlerOpts{
-		Timeout:           time.Duration(30) * time.Second,
+		Timeout:           30 * time.Second,
 		EnableOpenMetrics: true,
 	})
 }
