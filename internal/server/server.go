@@ -27,13 +27,14 @@ var (
 
 // Server contains all the necessary information to run Bifrost
 type Server struct {
-	cfg       Config
-	srv       *http.Server
-	healthSrv *http.Server
-	logger    *mlog.Logger
-	client    *http.Client
-	getHostFn func(bucket, endPoint string) string
-	creds     *credentials.Credentials
+	cfg        Config
+	srv        *http.Server
+	serviceSrv *http.Server
+	logger     *mlog.Logger
+	client     *http.Client
+	getHostFn  func(bucket, endPoint string) string
+	creds      *credentials.Credentials
+	metrics    *metrics
 }
 
 // New creates a new Bifrost server
@@ -72,19 +73,19 @@ func New(cfg Config) *Server {
 		},
 	}
 
-	healthMux := mux.NewRouter()
-	healthServer := &http.Server{
-		Addr:         cfg.ServiceSettings.HealthHost,
-		Handler:      healthMux,
+	serviceMux := mux.NewRouter()
+	serviceServer := &http.Server{
+		Addr:         cfg.ServiceSettings.ServiceHost,
+		Handler:      serviceMux,
 		ReadTimeout:  60 * time.Second,
 		WriteTimeout: 60 * time.Second,
 		IdleTimeout:  30 * time.Second,
 	}
 
 	s := &Server{
-		srv:       server,
-		healthSrv: healthServer,
-		client:    client,
+		srv:        server,
+		serviceSrv: serviceServer,
+		client:     client,
 		logger: mlog.NewLogger(&mlog.LoggerConfiguration{
 			ConsoleJson:   cfg.LogSettings.ConsoleJSON,
 			ConsoleLevel:  strings.ToLower(cfg.LogSettings.ConsoleLevel),
@@ -94,13 +95,15 @@ func New(cfg Config) *Server {
 			FileLevel:     strings.ToLower(cfg.LogSettings.FileLevel),
 			FileLocation:  cfg.LogSettings.FileLocation,
 		}),
-		cfg:   cfg,
-		creds: credentials.NewStatic(cfg.S3Settings.AccessKeyID, cfg.S3Settings.SecretAccessKey, "", credentials.SignatureV4),
+		cfg:     cfg,
+		creds:   credentials.NewStatic(cfg.S3Settings.AccessKeyID, cfg.S3Settings.SecretAccessKey, "", credentials.SignatureV4),
+		metrics: newMetrics(),
 	}
 
 	s.getHostFn = s.getHost
 	s.srv.Handler = s.withRecovery(s.handler())
-	healthMux.HandleFunc("/health", s.healthHandler).Methods("GET")
+	serviceMux.HandleFunc("/health", s.healthHandler).Methods("GET")
+	serviceMux.Handle("/metrics", s.metrics.metricsHandler())
 
 	return s
 }
@@ -125,7 +128,7 @@ func (s *Server) Start() error {
 
 	wg.Add(1)
 	go func() {
-		errChan <- s.healthSrv.ListenAndServe()
+		errChan <- s.serviceSrv.ListenAndServe()
 		wg.Done()
 	}()
 
@@ -147,7 +150,7 @@ func (s *Server) Stop() error {
 	if err := s.srv.Shutdown(ctx); err != nil {
 		return err
 	}
-	return s.healthSrv.Shutdown(ctx)
+	return s.serviceSrv.Shutdown(ctx)
 }
 
 func (s *Server) withRecovery(next http.Handler) http.Handler {
