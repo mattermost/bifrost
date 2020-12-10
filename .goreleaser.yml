@@ -1,0 +1,33 @@
+before:
+  hooks:
+    - go mod download
+    - go mod verify
+builds:
+  - main: ./cmd/bifrost
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+    flags:
+      - -mod=readonly
+      - -trimpath
+archives:
+  -
+    name_template: "{{ .ProjectName }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    wrap_in_directory: true
+    format: tar.gz
+    files:
+      - LICENSE.txt
+      - config/config.sample.json
+changelog:
+  sort: desc
+release:
+  github:
+    owner: mattermost
+    name: bifrost
+  name_template: "{{ .ProjectName }}-v{{ .Version }}"
+  disable: false
+checksum:
+  name_template: 'checksums.txt'
