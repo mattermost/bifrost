@@ -58,7 +58,7 @@ verify-gomod:
 # Draft a release
 release:
 	@if [[ -z "${NEXT_VER}" ]]; then \
-		echo "Error: NEXT_VER must be defined"; \
+		echo "Error: NEXT_VER must be defined, e.g. \"make release NEXT_VER=v1.0.1\""; \
 		exit -1; \
 	else \
 		if [[ "${TAG_EXISTS}" -eq 0 ]]; then \
