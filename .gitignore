@@ -22,3 +22,6 @@ config/config.json
 
 # Ignore log file
 bifrost.log
+
+# Ignore dist files
+dist
