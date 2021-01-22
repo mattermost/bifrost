@@ -1,5 +1,5 @@
 
-FROM golang:1.15.5-alpine AS builder
+FROM golang:1.15.7-alpine AS builder
 
 RUN apk add --update --no-cache ca-certificates bash make gcc musl-dev git openssh wget curl
 
@@ -17,6 +17,6 @@ RUN CGO_ENABLED=0 make build
 FROM alpine
 
 COPY --from=builder /go/src/bifrost/bifrost /bifrost
-COPY --from=builder /go/src/bifrost/config/config.json config/config.json
+COPY --from=builder /go/src/bifrost/build/config/config.json config/config.json
 
 ENTRYPOINT [ "/bifrost" ]

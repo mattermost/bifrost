@@ -1,0 +1,27 @@
+{
+    "ServiceSettings": {
+        "Host": "localhost:8087",
+        "ServiceHost": "localhost:8099",
+        "TLSCertFile": "",
+        "TLSKeyFile": "",
+        "MaxConnsPerHost": 500,
+        "ResponseHeaderTimeout": 30
+    },
+    "S3Settings": {
+        "AccessKeyId": "",
+        "SecretAccessKey": "",
+        "Bucket": "",
+        "Region": "us-east-1",
+        "Endpoint": "s3.dualstack.us-east-1.amazonaws.com",
+        "Scheme": "https"
+    },
+    "LogSettings": {
+        "EnableConsole": true,
+        "ConsoleLevel": "DEBUG",
+        "ConsoleJson": false,
+        "EnableFile": false,
+        "FileLevel": "WARN",
+        "FileJson": true,
+        "FileLocation": "bifrost.log"
+    }
+}
