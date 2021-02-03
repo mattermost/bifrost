@@ -1,5 +1,9 @@
 .PHONY: build check-style install run test verify-gomod
 
+## Docker Build Versions
+DOCKER_BUILD_IMAGE = golang:1.15.7
+DOCKER_BASE_IMAGE = alpine:3.13
+
 # Build variables
 COMMIT_HASH  ?= $(shell git rev-parse HEAD)
 BUILD_DATE   ?= $(shell date +%FT%T%z)
@@ -11,6 +15,7 @@ TAG_EXISTS=$(shell git rev-parse $(NEXT_VER) >/dev/null 2>&1; echo $$?)
 GO=go
 APP:=bifrost
 APPNAME:=bifrost
+MATTERMOST_BIFROST_IMAGE ?= mattermost/bifrost:test
 
 # Flags
 LDFLAGS :="
@@ -20,13 +25,18 @@ LDFLAGS +="
 
 # Build for distribution
 build:
-	@echo Default build Linux amd64
+	@echo Building Mattermost Bifrost
 	env GOOS=linux GOARCH=amd64 $(GO) build -ldflags $(LDFLAGS) -o $(APPNAME) ./cmd/$(APP)
 
 # Builds the docker image
-docker:
-	docker build -t mattermost/$(APPNAME) .
-	rm -f $(APPNAME)
+build-image:
+	@echo Building Mattermost Bifrost Docker Image
+	docker build \
+	--build-arg DOCKER_BUILD_IMAGE=$(DOCKER_BUILD_IMAGE) \
+	--build-arg DOCKER_BASE_IMAGE=$(DOCKER_BASE_IMAGE) \
+	. -f build/Dockerfile \
+	-t $(MATTERMOST_BIFROST_IMAGE) \
+	--no-cache
 
 # Build and install for the current platform
 install:
