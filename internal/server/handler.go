@@ -75,6 +75,8 @@ func (s *Server) handler() http.HandlerFunc {
 			w.Header().Set(key, strings.Join(value, ", "))
 		}
 
+		w.WriteHeader(resp.StatusCode)
+
 		n, err = io.Copy(w, resp.Body)
 		if err != nil {
 			s.logger.Warn("failed to copy response body", mlog.Err(err))
