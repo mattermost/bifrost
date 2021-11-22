@@ -1,9 +1,8 @@
 .PHONY: build check-style install run test verify-gomod
 
 ## Docker Build Versions
-DOCKER_BUILD_IMAGE = golang:1.15.7
-DOCKER_BASE_IMAGE = alpine:3.13
-
+DOCKER_BUILD_IMAGE = golang:1.17.3
+DOCKER_BASE_IMAGE = alpine:3.14
 # Build variables
 COMMIT_HASH  ?= $(shell git rev-parse HEAD)
 BUILD_DATE   ?= $(shell date +%FT%T%z)
