@@ -47,7 +47,7 @@ commands:
 jobs:
   test:
     docker:
-      - image: cimg/go:1.17.3
+      - image: circleci/golang:1.17.3
     steps:
       - checkout
       - install-golangci-lint
