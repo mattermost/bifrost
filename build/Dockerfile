@@ -16,7 +16,7 @@ RUN CGO_ENABLED=0 make build
 
 FROM alpine:3.14
 
-COPY --from=builder /go/src/bifrost/bifrost /bifrost
+COPY --from=builder /go/src/bifrost/build/_output/bin/bifrost /bifrost
 COPY --from=builder /go/src/bifrost/build/config/config.json config/config.json
 
 ENTRYPOINT [ "/bifrost" ]
