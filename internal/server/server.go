@@ -73,19 +73,9 @@ func New(cfg Config) *Server {
 		},
 	}
 
-	serviceMux := mux.NewRouter()
-	serviceServer := &http.Server{
-		Addr:         cfg.ServiceSettings.ServiceHost,
-		Handler:      serviceMux,
-		ReadTimeout:  60 * time.Second,
-		WriteTimeout: 60 * time.Second,
-		IdleTimeout:  30 * time.Second,
-	}
-
 	s := &Server{
-		srv:        server,
-		serviceSrv: serviceServer,
-		client:     client,
+		srv:    server,
+		client: client,
 		logger: mlog.NewLogger(&mlog.LoggerConfiguration{
 			ConsoleJson:   cfg.LogSettings.ConsoleJSON,
 			ConsoleLevel:  strings.ToLower(cfg.LogSettings.ConsoleLevel),
@@ -100,10 +90,21 @@ func New(cfg Config) *Server {
 		metrics: newMetrics(),
 	}
 
+	if cfg.ServiceSettings.ServiceHost != "" {
+		serviceMux := mux.NewRouter()
+		s.serviceSrv = &http.Server{
+			Addr:         cfg.ServiceSettings.ServiceHost,
+			Handler:      serviceMux,
+			ReadTimeout:  60 * time.Second,
+			WriteTimeout: 60 * time.Second,
+			IdleTimeout:  30 * time.Second,
+		}
+		serviceMux.HandleFunc("/health", s.healthHandler).Methods("GET")
+		serviceMux.Handle("/metrics", s.metrics.metricsHandler())
+	}
+
 	s.getHostFn = s.getHost
 	s.srv.Handler = s.withRecovery(s.handler())
-	serviceMux.HandleFunc("/health", s.healthHandler).Methods("GET")
-	serviceMux.Handle("/metrics", s.metrics.metricsHandler())
 
 	return s
 }
@@ -128,7 +129,9 @@ func (s *Server) Start() error {
 
 	wg.Add(1)
 	go func() {
-		errChan <- s.serviceSrv.ListenAndServe()
+		if s.serviceSrv != nil {
+			errChan <- s.serviceSrv.ListenAndServe()
+		}
 		wg.Done()
 	}()
 
@@ -150,7 +153,14 @@ func (s *Server) Stop() error {
 	if err := s.srv.Shutdown(ctx); err != nil {
 		return err
 	}
-	return s.serviceSrv.Shutdown(ctx)
+
+	if s.serviceSrv != nil {
+		if err := s.serviceSrv.Shutdown(ctx); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Server) withRecovery(next http.Handler) http.Handler {
