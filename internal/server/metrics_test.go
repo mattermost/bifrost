@@ -31,25 +31,21 @@ func TestMetrics(t *testing.T) {
 		m := &prometheusModels.Metric{}
 		data, err := metrics.requestsDuration.GetMetricWith(
 			prometheus.Labels{
-				"path":            "path",
 				"method":          "method",
 				"status_code":     "200",
 				"installation_id": "",
-				"size":            "",
 			})
 		require.NoError(t, err)
 		require.NoError(t, data.(prometheus.Histogram).Write(m))
 		require.Equal(t, uint64(0), m.Histogram.GetSampleCount())
 		require.Equal(t, 0.0, m.Histogram.GetSampleSum())
 
-		metrics.observeRequest("path/to/file.jpg", "GET", "random_id", 200, 1, 1.0)
+		metrics.observeRequest("GET", "random_id", 200, 1.0)
 		data, err = metrics.requestsDuration.GetMetricWith(
 			prometheus.Labels{
-				"path":            "path/to/file.jpg",
 				"method":          "GET",
 				"installation_id": "random_id",
 				"status_code":     "200",
-				"size":            "1",
 			})
 		require.NoError(t, err)
 		require.NoError(t, data.(prometheus.Histogram).Write(m))
