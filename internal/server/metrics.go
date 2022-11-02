@@ -36,21 +36,19 @@ func newMetrics() *metrics {
 			Name:      "requests_duration",
 			Help:      "Duration of the http requests.",
 		},
-		[]string{"path", "method", "status_code", "installation_id", "size"},
+		[]string{"method", "status_code", "installation_id"},
 	)
 	m.registry.MustRegister(m.requestsDuration)
 
 	return m
 }
 
-func (m *metrics) observeRequest(path, method, installationID string, statusCode int, size int64, duration float64) {
+func (m *metrics) observeRequest(method, installationID string, statusCode int, duration float64) {
 	m.requestsDuration.With(
 		prometheus.Labels{
-			"path":            path,
 			"method":          method,
 			"status_code":     strconv.Itoa(statusCode),
 			"installation_id": installationID,
-			"size":            strconv.FormatInt(size, 10),
 		},
 	).Observe(duration)
 }
