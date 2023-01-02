@@ -25,3 +25,4 @@ bifrost.log
 
 # Ignore dist files
 dist
+.git/
