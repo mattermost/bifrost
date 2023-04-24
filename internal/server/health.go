@@ -15,7 +15,7 @@ type healthResponse struct {
 	BuildDate  string `json:"build_date"`
 }
 
-func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) healthHandler(w http.ResponseWriter, _ *http.Request) {
 	err := json.NewEncoder(w).Encode(healthResponse{CommitHash: CommitHash, BuildDate: BuildDate})
 	if err != nil {
 		s.logger.Error("failed to write health response", mlog.Err(err))

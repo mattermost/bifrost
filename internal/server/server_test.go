@@ -5,7 +5,6 @@ package server
 
 import (
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -18,7 +17,7 @@ import (
 type panicHandler struct {
 }
 
-func (ph panicHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (ph panicHandler) ServeHTTP(_ http.ResponseWriter, _ *http.Request) {
 	panic("")
 }
 
@@ -37,7 +36,7 @@ func TestWithRecovery(t *testing.T) {
 		resp := w.Result()
 		if resp.Body != nil {
 			defer resp.Body.Close()
-			_, err := io.Copy(ioutil.Discard, resp.Body)
+			_, err := io.Copy(io.Discard, resp.Body)
 			require.NoError(t, err)
 		}
 	})

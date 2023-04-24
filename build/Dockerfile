@@ -1,5 +1,7 @@
+ARG BUILD_IMAGE=golang:1.17.3-alpine3.14
+ARG BASE_IMAGE=alpine:3.14
 
-FROM golang:1.17.3-alpine3.14 AS builder
+FROM ${BUILD_IMAGE} as builder
 
 RUN apk add --update --no-cache ca-certificates bash make gcc musl-dev git openssh wget curl
 
@@ -14,7 +16,7 @@ RUN CGO_ENABLED=0 make build
 
 #####
 
-FROM alpine:3.14
+FROM ${BASE_IMAGE}
 
 COPY --from=builder /go/src/bifrost/bifrost /bifrost
 COPY --from=builder /go/src/bifrost/build/config/config.json config/config.json

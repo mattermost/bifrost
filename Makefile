@@ -1,20 +1,26 @@
 .PHONY: build check-style install run test verify-gomod
 
+GOLANG_VERSION := $(shell cat go.mod | grep "^go " | cut -d " " -f 2)
+
 ## Docker Build Versions
-DOCKER_BUILD_IMAGE = golang:1.17.3
-DOCKER_BASE_IMAGE = alpine:3.14
+DOCKER_BUILD_IMAGE = golang:$(GOLANG_VERSION)-alpine3.17
+DOCKER_BASE_IMAGE  = gcr.io/distroless/static:nonroot
+
 # Build variables
 COMMIT_HASH  ?= $(shell git rev-parse HEAD)
 BUILD_DATE   ?= $(shell date +%FT%T%z)
+PACKAGES      = $(shell go list ./...)
 
 # Release variables
 TAG_EXISTS=$(shell git rev-parse $(NEXT_VER) >/dev/null 2>&1; echo $$?)
 
 # Variables
-GO=go
-APP:=bifrost
-APPNAME:=bifrost
-MATTERMOST_BIFROST_IMAGE ?= mattermost/bifrost:test
+GO                  = go
+APP                := bifrost
+APPNAME            := bifrost
+BIFROST_IMAGE_NAME ?= mattermost/$(APPNAME)
+BIFROST_IMAGE_TAG  ?= test
+BIFROST_IMAGE      ?= $(BIFROST_IMAGE_NAME):$(BIFROST_IMAGE_TAG)
 
 # Flags
 LDFLAGS :="
@@ -22,20 +28,26 @@ LDFLAGS += -X github.com/mattermost/$(APP)/internal/server.CommitHash=$(COMMIT_H
 LDFLAGS += -X github.com/mattermost/$(APP)/internal/server.BuildDate=$(BUILD_DATE)
 LDFLAGS +="
 
+# Tools
+GOLANGCILINT_VER := v1.52.2
+GOLANGCILINT := $(TOOLS_BIN_DIR)/$(GOLANGCILINT_BIN)
+
+TRIVY_SEVERITY := CRITICAL
+TRIVY_EXIT_CODE := 1
+TRIVY_VULN_TYPE := os,library
+
 # Build for distribution
 build:
 	@echo Building Mattermost Bifrost
 	env GOOS=linux GOARCH=amd64 $(GO) build -ldflags $(LDFLAGS) -o $(APPNAME) ./cmd/$(APP)
 
-# Builds the docker image
-build-image:
-	@echo Building Mattermost Bifrost Docker Image
-	docker build \
-	--build-arg DOCKER_BUILD_IMAGE=$(DOCKER_BUILD_IMAGE) \
-	--build-arg DOCKER_BASE_IMAGE=$(DOCKER_BASE_IMAGE) \
-	. -f build/Dockerfile \
-	-t $(MATTERMOST_BIFROST_IMAGE) \
-	--no-cache
+.PHONE: buildx-image
+buildx-image:  ## Builds and pushes the docker image
+	DOCKERFILE_PATH=build/Dockerfile BUILD_IMAGE=$(DOCKER_BUILD_IMAGE) BASE_IMAGE=$(DOCKER_BASE_IMAGE) IMAGE_NAME=$(BIFROST_IMAGE) ./scripts/build_image.sh buildx
+
+.PHONE: build-image
+build-image:  ## Build the docker image
+	DOCKERFILE_PATH=build/Dockerfile BUILD_IMAGE=$(DOCKER_BUILD_IMAGE) BASE_IMAGE=$(DOCKER_BASE_IMAGE) IMAGE_NAME=$(BIFROST_IMAGE) ./scripts/build_image.sh local
 
 # Build and install for the current platform
 install:
@@ -49,15 +61,20 @@ run:
 test: check-style
 	$(GO) test -cover -race ./...
 
-# Checks code style by running golangci-lint on codebase.
-check-style:
-	@if ! [ -x "$$(command -v golangci-lint)" ]; then \
-		echo "golangci-lint is not installed. Please see https://github.com/golangci/golangci-lint#install for installation instructions."; \
-		exit 1; \
-	fi; \
+## Runs govet and gofmt against all packages.
+.PHONY: check-style
+check-style: lint
+	@echo Checking for style guide compliance
 
+## Runs lint against all packages.
+lint: $(GOLANGCILINT)
 	@echo Running golangci-lint
-	golangci-lint run ./...
+	golangci-lint run
+
+## Runs lint against all packages for changes only
+lint-changes: $(GOLANGCILINT)
+	@echo Running golangci-lint over changes only
+	golangci-lint run -n
 
 # Check modules
 verify-gomod:
@@ -88,3 +105,18 @@ release:
 			goreleaser --rm-dist; \
 		fi; \
 	fi;\
+
+trivy: build-image ## Checks for vulnerabilities in the docker image
+	@echo running trivy
+	@trivy image --format table --exit-code $(TRIVY_EXIT_CODE) --ignore-unfixed --vuln-type $(TRIVY_VULN_TYPE) --severity $(TRIVY_SEVERITY) $(BIFROST_IMAGE)
+
+.PHONY: clean
+clean: ## Cleans the project and removes all generated files
+	@rm -rf $(TOOLS_BIN_DIR)
+
+## --------------------------------------
+## Tooling Binaries
+## --------------------------------------
+
+$(GOLANGCILINT): ## Build golangci-lint
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCILINT_VER)
