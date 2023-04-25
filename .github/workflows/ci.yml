@@ -44,7 +44,9 @@ jobs:
         cache: true
 
     - name: ci/test
-      run: make unittest
+      run: |
+        export PATH=$(go env GOPATH)/bin:$PATH
+        make unittest
 
   build:
     if: ${{ github.event_name == 'pull_request' || github.ref_name  == 'master' }}

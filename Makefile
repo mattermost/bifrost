@@ -16,6 +16,7 @@ TAG_EXISTS=$(shell git rev-parse $(NEXT_VER) >/dev/null 2>&1; echo $$?)
 
 # Variables
 GO                  = go
+GOPATH              = $(shell $(GO) env GOPATH)
 APP                := bifrost
 APPNAME            := bifrost
 BIFROST_IMAGE_NAME ?= mattermost/$(APPNAME)
@@ -70,12 +71,12 @@ check-style: lint
 	@echo Checking for style guide compliance
 
 ## Runs lint against all packages.
-lint: $(GOLANGCILINT)
+lint: $(GOPATH)/bin/golangci-lint
 	@echo Running golangci-lint
 	golangci-lint run
 
 ## Runs lint against all packages for changes only
-lint-changes: $(GOLANGCILINT)
+lint-changes: $(GOPATH)/bin/golangci-lint
 	@echo Running golangci-lint over changes only
 	golangci-lint run -n
 
@@ -121,5 +122,5 @@ clean: ## Cleans the project and removes all generated files
 ## Tooling Binaries
 ## --------------------------------------
 
-$(GOLANGCILINT): ## Build golangci-lint
+$(GOPATH)/bin/golangci-lint: ## Install golangci-lint
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCILINT_VER)
