@@ -28,6 +28,8 @@ LDFLAGS += -X github.com/mattermost/$(APP)/internal/server.CommitHash=$(COMMIT_H
 LDFLAGS += -X github.com/mattermost/$(APP)/internal/server.BuildDate=$(BUILD_DATE)
 LDFLAGS +="
 
+TEST_FLAGS ?= -v
+
 # Tools
 GOLANGCILINT_VER := v1.52.2
 GOLANGCILINT := $(TOOLS_BIN_DIR)/$(GOLANGCILINT_BIN)
@@ -58,8 +60,9 @@ run:
 	$(GO) run ./cmd/$(APP)
 
 # Test runs go test command
-test: check-style
-	$(GO) test -cover -race ./...
+.PHONY: unittest
+unittest:
+	$(GO) test -cover -race -covermode=atomic -coverprofile=coverage.out $(TEST_FLAGS) ./...
 
 ## Runs govet and gofmt against all packages.
 .PHONY: check-style
