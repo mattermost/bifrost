@@ -1,0 +1,38 @@
+name: cd
+on:
+  workflow_run:
+    workflows: ["ci"]
+    branches-ignore: ["*"]
+    types:
+    - completed
+  push:
+    tags:
+    - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@dc323e67f16fb5f7663d20ff7941f27f5809e9b6 # v3.2.0
+      with:
+        fetch-depth: 0
+
+    - name: ci/setup-buildx
+      uses: docker/setup-buildx-action@15c905b16b06416d2086efa066dd8e3a35cc7f98 # v2.4.0
+      with:
+        version: v0.7.1
+
+    - name: ci/docker-login
+      uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: ci/push-docker
+      run: make buildx-image
+      env:
+        BIFROST_IMAGE_TAG: ${{ github.ref_name }}
