@@ -171,6 +171,6 @@ func TestWriteError(t *testing.T) {
 	require.NoError(t, err, "unexpected error while reading body")
 
 	expected := `<?xml version="1.0" encoding="UTF-8"?>
-<Error><Code>500</Code><Message>error from valhalla</Message><BucketName>agnivatest</BucketName><Key></Key><RequestId></RequestId><HostId></HostId><Region></Region><Server></Server></Error>`
+<Error><Code>500</Code><Message>error from valhalla</Message><BucketName>agnivatest</BucketName><Key></Key><Resource></Resource><RequestId></RequestId><HostId></HostId><Region></Region><Server></Server></Error>`
 	assert.Equal(t, expected, string(buf), "unexpected response")
 }
