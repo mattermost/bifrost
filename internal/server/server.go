@@ -54,16 +54,16 @@ func New(cfg Config) *Server {
 			MaxIdleConns:          100,
 			IdleConnTimeout:       90 * time.Second,
 			TLSHandshakeTimeout:   10 * time.Second,
-			ResponseHeaderTimeout: 30 * time.Second,
+			ResponseHeaderTimeout: time.Duration(cfg.ServiceSettings.ResponseHeaderTimeoutSecs) * time.Second,
 			ExpectContinueTimeout: 1 * time.Second,
 		},
 	}
 
 	server := &http.Server{
 		Addr:         cfg.ServiceSettings.Host,
-		ReadTimeout:  60 * time.Second,
-		WriteTimeout: 60 * time.Second,
-		IdleTimeout:  30 * time.Second,
+		ReadTimeout:  time.Duration(cfg.ServiceSettings.ReadTimeoutSecs) * time.Second,
+		WriteTimeout: time.Duration(cfg.ServiceSettings.WriteTimeoutSecs) * time.Second,
+		IdleTimeout:  time.Duration(cfg.ServiceSettings.IdleTimeoutSecs) * time.Second,
 		TLSConfig: &tls.Config{
 			MinVersion:               tls.VersionTLS12,
 			PreferServerCipherSuites: true,

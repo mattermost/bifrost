@@ -20,12 +20,15 @@ type Config struct {
 
 // ServiceSettings is the configuration related to the web server.
 type ServiceSettings struct {
-	Host                  string
-	ServiceHost           string
-	TLSCertFile           string
-	TLSKeyFile            string
-	MaxConnsPerHost       int
-	ResponseHeaderTimeout int
+	Host                      string
+	ServiceHost               string
+	TLSCertFile               string
+	TLSKeyFile                string
+	MaxConnsPerHost           int
+	ResponseHeaderTimeoutSecs int
+	ReadTimeoutSecs           int
+	WriteTimeoutSecs          int
+	IdleTimeoutSecs           int
 }
 
 // AmazonS3Settings is the configuration related to the Amazon S3.
