@@ -34,11 +34,29 @@ The path to the TLS key file to use for TLS connection security.
 
 Maximum allowed number of connections per host.
 
-### ResponseHeaderTimeout
+### ResponseHeaderTimeoutSecs
 
 *int*
 
-Specifies the amount of time to wait for a server's response headers after fully writing the request.
+Specifies the amount of time to wait for AWS server's response headers after fully writing the request.
+
+### ReadTimeoutSecs
+
+*int*
+
+Specifies the amount of time to wait to read the entire request including the body.
+
+### WriteTimeoutSecs
+
+*int*
+
+Specifies the amount of time before timing out writes of response.
+
+### IdleTimeoutSecs
+
+*int*
+
+Specifies the amount of time to wait for the next request when keep-alives are enabled.
 
 ## S3Settings
 
