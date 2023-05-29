@@ -2,12 +2,8 @@ name: cd
 on:
   workflow_run:
     workflows: ["ci"]
-    branches-ignore: ["master"]
     types:
     - completed
-  push:
-    tags:
-    - "v**"
 
 permissions:
   contents: read
@@ -18,6 +14,14 @@ jobs:
     steps:
     - name: Checkout repo
       uses: actions/checkout@dc323e67f16fb5f7663d20ff7941f27f5809e9b6 # v3.2.0
+
+    - name: Set tag to use from PR
+      if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+      run: echo "IMAGE_TAG=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+
+    - name: Set tag to use from tag
+      if: github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.head_ref, 'refs/tags/')
+      run: echo "IMAGE_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
 
     - name: ci/setup-buildx
       uses: docker/setup-buildx-action@15c905b16b06416d2086efa066dd8e3a35cc7f98 # v2.4.0
@@ -31,4 +35,4 @@ jobs:
     - name: ci/push-docker
       run: make buildx-image
       env:
-        BIFROST_IMAGE_TAG: ${{ github.ref_name }}
+        BIFROST_IMAGE_TAG: ${{ env.IMAGE_TAG }}
