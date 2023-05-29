@@ -2,7 +2,7 @@ name: cd
 on:
   workflow_run:
     workflows: ["ci"]
-    branches: ["master"]
+    branches-ignore: ["master"]
     types:
     - completed
   push:
