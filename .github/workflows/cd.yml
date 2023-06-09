@@ -4,6 +4,9 @@ on:
     workflows: ["ci"]
     types:
     - completed
+  push:
+    tags:
+      - "v*"
 
 permissions:
   contents: read
