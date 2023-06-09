@@ -6,7 +6,7 @@ on:
     - completed
   push:
     tags:
-      - "v*"
+    - "v**"
 
 permissions:
   contents: read
@@ -25,7 +25,7 @@ jobs:
         echo "IMAGE_TAG=${INCOMING_PR_SHA:0:7}" >> $GITHUB_ENV
 
     - name: cd/set-tag-push
-      if: github.ref_type == 'tag' 
+      if: github.ref_type == 'tag'
       run: echo "IMAGE_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
 
     - name: cd/setup-buildx
