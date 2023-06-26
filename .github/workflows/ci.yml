@@ -53,7 +53,14 @@ jobs:
       uses: actions/checkout@dc323e67f16fb5f7663d20ff7941f27f5809e9b6 # v3.2.0
 
     - name: ci/set-short-SHA
-      run: echo "SHORT_SHA=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+      run: |
+        if [ "${{ github.event_name }}" == "pull_request" ]
+            then
+              SHA=${{ github.event.pull_request.head.sha }}
+            else [ "${{ github.event_name }}"  == 'push' ]
+              SHA=${GITHUB_SHA}
+            fi
+            echo "SHORT_SHA=${SHA:0:7}" >> $GITHUB_ENV
 
     - name: ci/build-docker
       run: make build-image
