@@ -8,6 +8,7 @@
 # Miscellaneous files
 debug
 .tmp
+coverage.out
 
 # Vim temporary files
 [._]*.s[a-w][a-z]

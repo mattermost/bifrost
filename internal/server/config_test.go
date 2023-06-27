@@ -4,7 +4,6 @@
 package server
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,7 +12,7 @@ import (
 )
 
 func TestParseConfig(t *testing.T) {
-	dir, err := ioutil.TempDir("", "bifrost-test")
+	dir, err := os.MkdirTemp("", "bifrost-test")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		os.RemoveAll(dir)
@@ -31,21 +30,21 @@ func TestParseConfig(t *testing.T) {
 
 	t.Run("invalid json format should fail", func(t *testing.T) {
 		f := filepath.Join(dir, "empty.json")
-		err = ioutil.WriteFile(f, []byte("\n"), 0644)
+		err = os.WriteFile(f, []byte("\n"), 0644)
 		_, err = ParseConfig(f)
 		require.Error(t, err)
 	})
 
 	t.Run("should be able to read a valid json file", func(t *testing.T) {
 		f := filepath.Join(dir, "valid.json")
-		err = ioutil.WriteFile(f, []byte("{}\n"), 0644)
+		err = os.WriteFile(f, []byte("{}\n"), 0644)
 		_, err = ParseConfig(f)
 		require.NoError(t, err)
 	})
 
 	t.Run("should be able to read a valid json file and override with env. var.", func(t *testing.T) {
 		f := filepath.Join(dir, "valid.json")
-		err = ioutil.WriteFile(f, []byte(`{
+		err = os.WriteFile(f, []byte(`{
 			"ServiceSettings": {
 				"Host": "localhost:8087",
 				"TLSCertFile": ""

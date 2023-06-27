@@ -1,0 +1,85 @@
+name: ci
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: ci/checkout-repo
+      uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # v3.2.0
+
+    - name: ci/setup-go
+      uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.5.0
+      with:
+        go-version-file: go.mod
+        cache: true
+
+    - name: ci/verify-gomod
+      run: make verify-gomod
+
+    - name: ci/check-style
+      run: make check-style
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: ci/checkout-repo
+      uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # v3.2.0
+
+    - name: ci/setup-go
+      uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.5.0
+      with:
+        go-version-file: go.mod
+        cache: true
+
+    - name: ci/test
+      run: make unittest
+
+  build:
+    if: ${{ github.event_name == 'pull_request' || github.ref_name  == 'master' }}
+    permissions:
+      security-events: write
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+    - name: ci/checkout-repo
+      uses: actions/checkout@dc323e67f16fb5f7663d20ff7941f27f5809e9b6 # v3.2.0
+
+    - name: ci/set-short-SHA
+      run: |
+        if [ "${{ github.event_name }}" == "pull_request" ]
+            then
+              SHA=${{ github.event.pull_request.head.sha }}
+            else [ "${{ github.event_name }}"  == 'push' ]
+              SHA=${GITHUB_SHA}
+            fi
+            echo "SHORT_SHA=${SHA:0:7}" >> $GITHUB_ENV
+
+    - name: ci/build-docker
+      run: make build-image
+
+    - name: ci/scan-docker-security
+      uses: aquasecurity/trivy-action@8bd2f9fbda2109502356ff8a6a89da55b1ead252 # v0.9.1
+      continue-on-error: true
+      with:
+        image-ref: "mattermost/bifrost:test"
+        format: "sarif"
+        limit-severities-for-sarif: true # https://github.com/aquasecurity/trivy-action/blob/0.9.1/entrypoint.sh#L172
+        output: "trivy-results.sarif"
+        exit-code: "0"
+        ignore-unfixed: true
+        vuln-type: "os,library"
+        severity: "CRITICAL,HIGH"
+
+    - name: ci/create-trivy-results-report
+      # if: failure()
+      uses: github/codeql-action/upload-sarif@17573ee1cc1b9d061760f3a006fc4aac4f944fd5 # v2.2.4
+      with:
+        sarif_file: "trivy-results.sarif"

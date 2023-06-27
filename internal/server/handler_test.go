@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -95,7 +94,7 @@ func TestHandler(t *testing.T) {
 
 		resp := w.Result()
 		defer resp.Body.Close()
-		io.Copy(ioutil.Discard, resp.Body)
+		io.Copy(io.Discard, resp.Body)
 
 		// Verify response headers
 		assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
@@ -138,7 +137,7 @@ func TestHandler(t *testing.T) {
 
 		resp := w.Result()
 		defer resp.Body.Close()
-		io.Copy(ioutil.Discard, resp.Body)
+		io.Copy(io.Discard, resp.Body)
 
 		// Verify response headers
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode, "unexpected status code")
@@ -168,10 +167,10 @@ func TestWriteError(t *testing.T) {
 	resp := w.Result()
 	defer resp.Body.Close()
 
-	buf, err := ioutil.ReadAll(resp.Body)
+	buf, err := io.ReadAll(resp.Body)
 	require.NoError(t, err, "unexpected error while reading body")
 
 	expected := `<?xml version="1.0" encoding="UTF-8"?>
-<Error><Code>500</Code><Message>error from valhalla</Message><BucketName>agnivatest</BucketName><Key></Key><RequestId></RequestId><HostId></HostId><Region></Region><Server></Server></Error>`
+<Error><Code>500</Code><Message>error from valhalla</Message><BucketName>agnivatest</BucketName><Key></Key><Resource></Resource><RequestId></RequestId><HostId></HostId><Region></Region><Server></Server></Error>`
 	assert.Equal(t, expected, string(buf), "unexpected response")
 }

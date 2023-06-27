@@ -1,26 +1,32 @@
+# Docs: https://golangci-lint.run/usage/configuration/#config-file
+
 run:
   timeout: 5m
   modules-download-mode: readonly
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
 
 linters-settings:
   gofmt:
     simplify: true
   govet:
-    check-shadowing: true
     enable-all: true
+    disable:
+    - fieldalignment
+    check-shadowing: true
 
 linters:
   disable-all: true
   enable:
-    - deadcode
-    - gofmt
-    - golint
-    - gosimple
-    - govet
-    - ineffassign
-    - scopelint
-    - structcheck
-    - staticcheck
-    - unconvert
-    - unused
-    - varcheck
+  - exportloopref
+  - gofmt
+  - goimports
+  - gosimple
+  - govet
+  - ineffassign
+  - revive
+  - staticcheck
+  - unconvert
+  - unused
