@@ -21,7 +21,7 @@ jobs:
     - name: cd/set-tag-pr
       if: (github.event.workflow_run.event == 'pull_request' || github.event.workflow_run.event == 'push') && github.event.workflow_run.conclusion == 'success'
       run: |
-        echo "INCOMING_PR_SHA=${{ github.event.workflow_run.head_sha }}"
+        INCOMING_PR_SHA=${{ github.event.workflow_run.head_sha }}
         echo "IMAGE_TAG=${INCOMING_PR_SHA:0:7}" >> $GITHUB_ENV
 
     - name: cd/set-tag-push
