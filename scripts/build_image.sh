@@ -12,7 +12,7 @@ EXTRA_FLAGS=("--no-cache")
 # If the image is going to be built using buildx
 if [[ "$1" == "buildx" ]]; then
     DOCKER_COMMAND=("buildx" "build")
-    EXTRA_FLAGS=("--no-cache" "--platform" "linux/amd64,linux/arm64")
+    EXTRA_FLAGS=("--no-cache" "--platform" "linux/amd64,linux/arm64" "--push")
 
     # Set up buildx builder if it's not already set up
     if [[ $(docker buildx ls | grep -c builder) -eq 0 ]]; then
