@@ -8,12 +8,14 @@ import (
 	"encoding/xml"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/mattermost/mattermost-server/v5/mlog"
 	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/s3utils"
 	"github.com/minio/minio-go/v7/pkg/signer"
 )
 
@@ -37,15 +39,45 @@ func (s *Server) handler() http.HandlerFunc {
 			installationID = s[1]
 		}
 
-		r.URL.Scheme = s.cfg.S3Settings.Scheme
-		r.URL.Host = host
+		// Strip the bucket name from the path which gets added by Minio
+		// if the S3 hostname does not match a URL pattern.
+		objectName := strings.TrimPrefix(r.URL.Path, "/"+s.cfg.S3Settings.Bucket)
+
+		// Rebuild the URL from scratch, using s3utils.EncodePath on the unescaped
+		// objectName from the path.
+		//
+		// When Mattermost makes an S3 request, the minio library already calls
+		// s3utils.EncodePath, translating (among other characters) both ' ' to %20 and
+		// '+' to %2B. This is actually more strict than RFC 3986 requires, since a
+		// '+' in the path doesn't actually need to be escaped.
+		//
+		// When Bifrost receives the request, net.URL happily unescapes both characters.
+		// The signer package generates a canonical URL before signing, also using
+		// s3utils.EncodePath. But if we don't re-encode with s3utils.EncodePath ourselves,
+		// then our replayed request upstream will only encode the ' ' and not the '+',
+		// resulting in a signature mismatch.
+		//
+		// We have to do it here, within Bifrost, and not from Mattermost, otherwise we're
+		// effectively just double escaping. While that works to avoid the signature
+		// mismatch, it changes the lookup paths for previously created files.
+		urlStr := s.cfg.S3Settings.Scheme + "://" + host + s3utils.EncodePath(objectName)
+		if len(r.URL.RawQuery) > 0 {
+			urlStr += "?" + r.URL.RawQuery
+		}
+
+		targetURL, err := url.Parse(urlStr)
+		if err != nil {
+			s.writeError(w, err)
+			return
+		}
+
+		originalURL := r.URL
+		r.URL = targetURL
 		r.Host = host
 		// Wiping out RequestURI
 		r.RequestURI = ""
-		// Stripping the bucket name from the path which gets added by Minio
-		// if the S3 hostname does not match a URL pattern.
-		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/"+s.cfg.S3Settings.Bucket)
-		s.logger.Debug("received request", mlog.String("method", r.Method), mlog.String("url", r.URL.String()))
+
+		s.logger.Debug("received request", mlog.String("method", r.Method), mlog.String("url", originalURL.String()), mlog.String("target_url", targetURL.String()))
 
 		// Get credentials.
 		val, err := s.creds.Get()
