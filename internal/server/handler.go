@@ -36,7 +36,9 @@ func (s *Server) handler() http.HandlerFunc {
 			s.metrics.observeRequest(r.Method, installationID, statusCode, elapsed)
 		}()
 
-		s.logger.Warn(fmt.Sprintf("REQUEST: %+v", r))
+		s.logger.Debug("-------------------------")
+		s.logger.Debug(fmt.Sprintf("REQUEST: %+v", r))
+		s.logger.Debug("-------------------------")
 
 		if s := strings.Split(r.URL.Path, "/"); len(s) > 1 {
 			installationID = s[1]
