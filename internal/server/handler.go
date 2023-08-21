@@ -6,6 +6,7 @@ package server
 import (
 	"bytes"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -34,6 +35,8 @@ func (s *Server) handler() http.HandlerFunc {
 		defer func() {
 			s.metrics.observeRequest(r.Method, installationID, statusCode, elapsed)
 		}()
+
+		s.logger.Warn(fmt.Sprintf("REQUEST: %+v", r))
 
 		if s := strings.Split(r.URL.Path, "/"); len(s) > 1 {
 			installationID = s[1]
