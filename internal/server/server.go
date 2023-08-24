@@ -116,7 +116,7 @@ func (s *Server) Start() error {
 	errChan := make(chan error, 2)
 	wg.Add(1)
 	go func() {
-		s.logger.Info("server started", mlog.String("host", s.cfg.ServiceSettings.Host))
+		s.logger.Info("server started (test)", mlog.String("host", s.cfg.ServiceSettings.Host))
 		var err error
 		if s.cfg.ServiceSettings.TLSCertFile != "" && s.cfg.ServiceSettings.TLSKeyFile != "" {
 			err = s.srv.ListenAndServeTLS(s.cfg.ServiceSettings.TLSCertFile, s.cfg.ServiceSettings.TLSKeyFile)

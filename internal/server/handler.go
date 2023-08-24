@@ -40,8 +40,6 @@ func (s *Server) handler() http.HandlerFunc {
 		s.logger.Debug(fmt.Sprintf("REQUEST: %+v", r))
 		s.logger.Debug("-------------------------")
 
-		fmt.Printf("REQUEST: %+v\n", r)
-
 		if s := strings.Split(r.URL.Path, "/"); len(s) > 1 {
 			installationID = s[1]
 		}
