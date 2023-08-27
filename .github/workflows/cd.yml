@@ -20,7 +20,6 @@ jobs:
       uses: actions/checkout@dc323e67f16fb5f7663d20ff7941f27f5809e9b6 # v3.2.0
 
     - name: cd/set-tag-pr
-      if: (github.event.workflow_run.event == 'pull_request' || github.event.workflow_run.event == 'push') && github.event.workflow_run.conclusion == 'success'
       run: |
         echo "IMAGE_TAG=${INCOMING_PR_SHA:0:7}" >> $GITHUB_ENV
       env:
