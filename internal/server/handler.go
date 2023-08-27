@@ -41,7 +41,8 @@ func (s *Server) handler() http.HandlerFunc {
 		s.logger.Debug(fmt.Sprintf("REQUEST: %+v", r))
 		s.logger.Debug("-------------------------")
 
-		names, err := net.LookupAddr(r.RemoteAddr)
+		addr := strings.Split(r.RemoteAddr, ":")[0]
+		names, err := net.LookupAddr(addr)
 		if err != nil {
 			s.logger.Error(err.Error())
 		} else {
