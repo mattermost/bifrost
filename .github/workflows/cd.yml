@@ -27,7 +27,7 @@ jobs:
         else [ "${{ github.event_name }}"  == 'push' ]
           SHA=${GITHUB_SHA}
         fi
-        echo "IMAGE_TAG=${SHA:0:7}" >> $GITHUB_ENV
+        echo "IMAGE_TAG=test-${SHA:0:7}" >> $GITHUB_ENV
 
     - name: cd/set-tag-push
       if: github.ref_type == 'tag'
