@@ -8,6 +8,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -39,6 +40,13 @@ func (s *Server) handler() http.HandlerFunc {
 		s.logger.Debug("-------------------------")
 		s.logger.Debug(fmt.Sprintf("REQUEST: %+v", r))
 		s.logger.Debug("-------------------------")
+
+		names, err := net.LookupAddr(r.RemoteAddr)
+		if err != nil {
+			s.logger.Error(err.Error())
+		} else {
+			s.logger.Debug(fmt.Sprintf("REVERSE NAMES: %+v", names))
+		}
 
 		if s := strings.Split(r.URL.Path, "/"); len(s) > 1 {
 			installationID = s[1]
