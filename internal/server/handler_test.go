@@ -258,7 +258,7 @@ func TestHandler(t *testing.T) {
 			cfg:       cfg,
 			getHostFn: dummyGetHost,
 			lookupAddrFn: func(addr string) ([]string, error) {
-				return []string{"1.1.1.1.test.agnivatest.svc.cluster.local."}, nil
+				return []string{"1.1.1.1.test.foo.svc.cluster.local."}, nil
 			},
 			client: http.DefaultClient,
 			creds: credentials.NewStatic(cfg.S3Settings.AccessKeyID,
