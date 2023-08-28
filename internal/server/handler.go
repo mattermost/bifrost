@@ -37,8 +37,8 @@ func (s *Server) handler() http.HandlerFunc {
 			s.metrics.observeRequest(r.Method, installationID, statusCode, elapsed)
 		}()
 
-		if s := strings.Split(r.URL.Path, "/"); len(s) > 1 {
-			installationID = s[1]
+		if s := strings.Split(r.URL.Path, "/"); len(s) > 2 {
+			installationID = s[2]
 		}
 
 		if s.cfg.ServiceSettings.ReverseAddressLookupValidation {
