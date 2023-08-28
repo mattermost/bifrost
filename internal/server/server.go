@@ -105,6 +105,7 @@ func New(cfg Config) *Server {
 	}
 
 	s.getHostFn = s.getHost
+	s.lookupAddrFn = net.LookupAddr
 	s.srv.Handler = s.withRecovery(s.handler())
 
 	return s

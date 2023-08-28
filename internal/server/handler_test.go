@@ -252,17 +252,7 @@ func TestHandler(t *testing.T) {
 			return strings.TrimPrefix(ts.URL, "http://")
 		}
 
-		cfg := Config{
-			ServiceSettings: ServiceSettings{ReverseAddressLookupValidation: true},
-			S3Settings: AmazonS3Settings{
-				AccessKeyID:     "AKIA2AccessKey",
-				SecretAccessKey: "start/secretkey/end",
-				Region:          "us-east-1",
-				Endpoint:        "s3.dualstack.us-east-1.amazonaws.com",
-				Scheme:          "http",
-				Bucket:          "agnivatest",
-			},
-		}
+		cfg.ServiceSettings.ReverseAddressLookupValidation = true
 		s := &Server{
 			logger:    mlog.NewTestingLogger(t, os.Stderr),
 			cfg:       cfg,
