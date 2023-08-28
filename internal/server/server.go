@@ -27,14 +27,15 @@ var (
 
 // Server contains all the necessary information to run Bifrost
 type Server struct {
-	cfg        Config
-	srv        *http.Server
-	serviceSrv *http.Server
-	logger     *mlog.Logger
-	client     *http.Client
-	getHostFn  func(bucket, endPoint string) string
-	creds      *credentials.Credentials
-	metrics    *metrics
+	cfg          Config
+	srv          *http.Server
+	serviceSrv   *http.Server
+	logger       *mlog.Logger
+	client       *http.Client
+	getHostFn    func(bucket, endPoint string) string
+	lookupAddrFn func(addr string) (names []string, err error)
+	creds        *credentials.Credentials
+	metrics      *metrics
 }
 
 // New creates a new Bifrost server

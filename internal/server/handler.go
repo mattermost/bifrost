@@ -8,7 +8,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -42,11 +41,9 @@ func (s *Server) handler() http.HandlerFunc {
 			installationID = s[1]
 		}
 
-		s.logger.Debug("T1")
 		if s.cfg.ServiceSettings.ReverseAddressLookupValidation {
-			s.logger.Debug("T2")
 			if err := s.validateRequestMatchesInstallationID(r, installationID); err != nil {
-				s.writeError(w, err)
+				s.writeError(w, errors.Wrap(err, "installation ID request validation failed"))
 				return
 			}
 		}
@@ -156,7 +153,7 @@ func (s *Server) writeError(w http.ResponseWriter, sourceErr error) {
 
 func (s *Server) validateRequestMatchesInstallationID(r *http.Request, installationID string) error {
 	addr := strings.Split(r.RemoteAddr, ":")[0]
-	names, err := net.LookupAddr(addr)
+	names, err := s.lookupAddrFn(addr)
 	if err != nil {
 		return errors.Wrap(err, "failed to perform reverse domain name lookup")
 	}
@@ -165,15 +162,19 @@ func (s *Server) validateRequestMatchesInstallationID(r *http.Request, installat
 	}
 	name := names[0]
 
-	// Perform validation with the folowing inputs.
+	// Perform validation by comparing reverse lookup to expected namespace.
 	// Example Reverse Lookup:
 	//   IP_ADDR.SERVICE_NAME.NAMESPACE/INSTALLATION_ID.svc.cluster.local.
-	if !strings.HasSuffix(name, fmt.Sprintf(".%s.svc.cluster.local.", installationID)) ||
-		!strings.HasPrefix(name, addr) {
-		s.logger.Warn(name)
+	if !requestIsValid(name, installationID) {
+		s.logger.Warn("reverse name lookup validation failed", mlog.String("name", name), mlog.String("installationID", installationID))
+		return errors.New("validation failed")
 	}
 
-	s.logger.Debug("reverse name lookup verification passed", mlog.String("name", name), mlog.String("installationID", installationID))
+	s.logger.Debug("reverse name lookup validation passed", mlog.String("name", name), mlog.String("installationID", installationID))
 
 	return nil
+}
+
+func requestIsValid(name, installationID string) bool {
+	return strings.HasSuffix(name, fmt.Sprintf(".%s.svc.cluster.local.", installationID))
 }
