@@ -42,7 +42,9 @@ func (s *Server) handler() http.HandlerFunc {
 			installationID = s[1]
 		}
 
+		s.logger.Debug("T1")
 		if s.cfg.ServiceSettings.ReverseAddressLookupValidation {
+			s.logger.Debug("T2")
 			if err := s.validateRequestMatchesInstallationID(r, installationID); err != nil {
 				s.writeError(w, err)
 				return
