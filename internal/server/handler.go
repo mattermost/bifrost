@@ -19,6 +19,7 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/s3utils"
 	"github.com/minio/minio-go/v7/pkg/signer"
+	"github.com/pkg/errors"
 )
 
 func (s *Server) handler() http.HandlerFunc {
@@ -37,20 +38,15 @@ func (s *Server) handler() http.HandlerFunc {
 			s.metrics.observeRequest(r.Method, installationID, statusCode, elapsed)
 		}()
 
-		s.logger.Debug("-------------------------")
-		s.logger.Debug(fmt.Sprintf("REQUEST: %+v", r))
-		s.logger.Debug("-------------------------")
-
-		addr := strings.Split(r.RemoteAddr, ":")[0]
-		names, err := net.LookupAddr(addr)
-		if err != nil {
-			s.logger.Error(err.Error())
-		} else {
-			s.logger.Debug(fmt.Sprintf("REVERSE NAMES: %+v", names))
-		}
-
 		if s := strings.Split(r.URL.Path, "/"); len(s) > 1 {
 			installationID = s[1]
+		}
+
+		if s.cfg.ServiceSettings.ReverseAddressLookupValidation {
+			if err := s.validateRequestMatchesInstallationID(r, installationID); err != nil {
+				s.writeError(w, err)
+				return
+			}
 		}
 
 		// Strip the bucket name from the path which gets added by Minio
@@ -154,4 +150,28 @@ func (s *Server) writeError(w http.ResponseWriter, sourceErr error) {
 	if err != nil {
 		s.logger.Warn("failed to write error response", mlog.Err(err))
 	}
+}
+
+func (s *Server) validateRequestMatchesInstallationID(r *http.Request, installationID string) error {
+	addr := strings.Split(r.RemoteAddr, ":")[0]
+	names, err := net.LookupAddr(addr)
+	if err != nil {
+		return errors.Wrap(err, "failed to perform reverse domain name lookup")
+	}
+	if len(names) == 0 {
+		return errors.New("no names returned in reverse lookup")
+	}
+	name := names[0]
+
+	// Perform validation with the folowing inputs.
+	// Example Reverse Lookup:
+	//   IP_ADDR.SERVICE_NAME.NAMESPACE/INSTALLATION_ID.svc.cluster.local.
+	if !strings.HasSuffix(name, fmt.Sprintf(".%s.svc.cluster.local.", installationID)) ||
+		!strings.HasPrefix(name, addr) {
+		s.logger.Warn(name)
+	}
+
+	s.logger.Debug("reverse name lookup verification passed", mlog.String("name", name), mlog.String("installationID", installationID))
+
+	return nil
 }

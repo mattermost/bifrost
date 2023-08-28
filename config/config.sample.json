@@ -8,7 +8,8 @@
         "ResponseHeaderTimeoutSecs": 30,
         "ReadTimeoutSecs": 30,
         "WriteTimeoutSecs": 30,
-        "IdleTimeoutSecs": 30
+        "IdleTimeoutSecs": 30,
+        "ReverseAddressLookupValidation": true
     },
     "S3Settings": {
         "AccessKeyId": "",
