@@ -6,6 +6,7 @@ package server
 import (
 	"bytes"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -17,6 +18,7 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/s3utils"
 	"github.com/minio/minio-go/v7/pkg/signer"
+	"github.com/pkg/errors"
 )
 
 func (s *Server) handler() http.HandlerFunc {
@@ -35,8 +37,15 @@ func (s *Server) handler() http.HandlerFunc {
 			s.metrics.observeRequest(r.Method, installationID, statusCode, elapsed)
 		}()
 
-		if s := strings.Split(r.URL.Path, "/"); len(s) > 1 {
-			installationID = s[1]
+		if s := strings.Split(r.URL.Path, "/"); len(s) > 2 {
+			installationID = s[2]
+		}
+
+		if s.cfg.ServiceSettings.RequestValidation {
+			if err := s.validateRequestMatchesInstallationID(r, installationID); err != nil {
+				s.writeError(w, errors.Wrap(err, "installation ID request validation failed"))
+				return
+			}
 		}
 
 		// Strip the bucket name from the path which gets added by Minio
@@ -140,4 +149,31 @@ func (s *Server) writeError(w http.ResponseWriter, sourceErr error) {
 	if err != nil {
 		s.logger.Warn("failed to write error response", mlog.Err(err))
 	}
+}
+
+func (s *Server) validateRequestMatchesInstallationID(r *http.Request, installationID string) error {
+	addr := strings.Split(r.RemoteAddr, ":")[0]
+	names, err := s.lookupAddrFn(addr)
+	if err != nil {
+		return errors.Wrap(err, "failed to perform reverse domain name lookup")
+	}
+	if len(names) == 0 {
+		return errors.New("no names returned in reverse lookup")
+	}
+	name := names[0]
+
+	// Perform validation by comparing reverse lookup to expected namespace.
+	// Example Reverse Lookup:
+	//   IP_ADDR.SERVICE_NAME.NAMESPACE/INSTALLATION_ID.svc.cluster.local.
+	if !s.requestIsValid(name, installationID) {
+		return errors.Errorf("reverse name lookup validation failed; name=%s, installationID=%s", name, installationID)
+	}
+
+	s.logger.Debug("reverse name lookup validation passed", mlog.String("name", name), mlog.String("installationID", installationID))
+
+	return nil
+}
+
+func (s *Server) requestIsValid(name, installationID string) bool {
+	return strings.HasSuffix(name, fmt.Sprintf(".%s.%s", installationID, s.cfg.ServiceSettings.RequestValidationExpectedNameSuffix))
 }
