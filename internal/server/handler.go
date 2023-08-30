@@ -165,7 +165,7 @@ func (s *Server) validateRequestMatchesInstallationID(r *http.Request, installat
 	// Perform validation by comparing reverse lookup to expected namespace.
 	// Example Reverse Lookup:
 	//   IP_ADDR.SERVICE_NAME.NAMESPACE/INSTALLATION_ID.svc.cluster.local.
-	if !requestIsValid(name, installationID) {
+	if !s.requestIsValid(name, installationID) {
 		s.logger.Warn("reverse name lookup validation failed", mlog.String("name", name), mlog.String("installationID", installationID))
 		return errors.New("validation failed")
 	}
@@ -175,6 +175,6 @@ func (s *Server) validateRequestMatchesInstallationID(r *http.Request, installat
 	return nil
 }
 
-func requestIsValid(name, installationID string) bool {
-	return strings.HasSuffix(name, fmt.Sprintf(".%s.svc.cluster.local.", installationID))
+func (s *Server) requestIsValid(name, installationID string) bool {
+	return strings.HasSuffix(name, fmt.Sprintf(".%s.%s", installationID, s.cfg.ServiceSettings.RequestValidationExpectedNameSuffix))
 }

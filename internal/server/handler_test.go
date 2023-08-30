@@ -253,6 +253,7 @@ func TestHandler(t *testing.T) {
 		}
 
 		cfg.ServiceSettings.RequestValidation = true
+		cfg.ServiceSettings.RequestValidationExpectedNameSuffix = "svc.cluster.local."
 		s := &Server{
 			logger:    mlog.NewTestingLogger(t, os.Stderr),
 			cfg:       cfg,
@@ -319,6 +320,15 @@ func TestWriteError(t *testing.T) {
 }
 
 func TestValidateRequest(t *testing.T) {
+	s := &Server{
+		logger: mlog.NewTestingLogger(t, os.Stderr),
+		cfg: Config{
+			ServiceSettings{RequestValidationExpectedNameSuffix: "svc.cluster.local."},
+			AmazonS3Settings{},
+			LogSettings{},
+		},
+	}
+
 	for _, test := range []struct {
 		description string
 		name        string
@@ -331,7 +341,7 @@ func TestValidateRequest(t *testing.T) {
 		{"valid", "1.1.1.1.mm-test.id1.svc.cluster.local.", "id1", true},
 	} {
 		t.Run(test.description, func(t *testing.T) {
-			assert.Equal(t, test.expected, requestIsValid(test.name, test.id))
+			assert.Equal(t, test.expected, s.requestIsValid(test.name, test.id))
 		})
 	}
 }

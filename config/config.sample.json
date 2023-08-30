@@ -9,7 +9,8 @@
         "ReadTimeoutSecs": 30,
         "WriteTimeoutSecs": 30,
         "IdleTimeoutSecs": 30,
-        "RequestValidation": false
+        "RequestValidation": false,
+        "RequestValidationExpectedNameSuffix": "svc.cluster.local."
     },
     "S3Settings": {
         "AccessKeyId": "",
