@@ -166,8 +166,7 @@ func (s *Server) validateRequestMatchesInstallationID(r *http.Request, installat
 	// Example Reverse Lookup:
 	//   IP_ADDR.SERVICE_NAME.NAMESPACE/INSTALLATION_ID.svc.cluster.local.
 	if !s.requestIsValid(name, installationID) {
-		s.logger.Warn("reverse name lookup validation failed", mlog.String("name", name), mlog.String("installationID", installationID))
-		return errors.New("validation failed")
+		return errors.Errorf("reverse name lookup validation failed; name=%s, installationID=%s", name, installationID)
 	}
 
 	s.logger.Debug("reverse name lookup validation passed", mlog.String("name", name), mlog.String("installationID", installationID))
