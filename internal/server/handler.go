@@ -41,7 +41,7 @@ func (s *Server) handler() http.HandlerFunc {
 			installationID = s[2]
 		}
 
-		if s.cfg.ServiceSettings.ReverseAddressLookupValidation {
+		if s.cfg.ServiceSettings.RequestValidation {
 			if err := s.validateRequestMatchesInstallationID(r, installationID); err != nil {
 				s.writeError(w, errors.Wrap(err, "installation ID request validation failed"))
 				return

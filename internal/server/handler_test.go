@@ -252,7 +252,7 @@ func TestHandler(t *testing.T) {
 			return strings.TrimPrefix(ts.URL, "http://")
 		}
 
-		cfg.ServiceSettings.ReverseAddressLookupValidation = true
+		cfg.ServiceSettings.RequestValidation = true
 		s := &Server{
 			logger:    mlog.NewTestingLogger(t, os.Stderr),
 			cfg:       cfg,
