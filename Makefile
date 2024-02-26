@@ -3,7 +3,7 @@
 GOLANG_VERSION := $(shell cat go.mod | grep "^go " | cut -d " " -f 2)
 
 ## Docker Build Versions
-DOCKER_BUILD_IMAGE = golang:$(GOLANG_VERSION)-alpine3.17
+DOCKER_BUILD_IMAGE = golang:$(GOLANG_VERSION)-alpine3.19
 DOCKER_BASE_IMAGE  = gcr.io/distroless/static:nonroot
 
 # Build variables
@@ -32,7 +32,7 @@ LDFLAGS +="
 TEST_FLAGS ?= -v
 
 # Tools
-GOLANGCILINT_VER := v1.52.2
+GOLANGCILINT_VER := v1.56.2
 GOLANGCILINT := $(TOOLS_BIN_DIR)/$(GOLANGCILINT_BIN)
 
 TRIVY_SEVERITY := CRITICAL

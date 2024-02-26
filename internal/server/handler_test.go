@@ -73,7 +73,7 @@ func TestHandler(t *testing.T) {
 		}))
 		defer ts.Close()
 
-		dummyGetHost := func(bucket, endPoint string) string {
+		dummyGetHost := func(_, _ string) string {
 			return strings.TrimPrefix(ts.URL, "http://")
 		}
 
@@ -116,7 +116,7 @@ func TestHandler(t *testing.T) {
 		}))
 		defer ts.Close()
 
-		dummyGetHost := func(bucket, endPoint string) string {
+		dummyGetHost := func(_, _ string) string {
 			return strings.TrimPrefix(ts.URL, "http://")
 		}
 
@@ -180,7 +180,7 @@ func TestHandler(t *testing.T) {
 		}))
 		defer ts.Close()
 
-		dummyGetHost := func(bucket, endPoint string) string {
+		dummyGetHost := func(_, _ string) string {
 			return strings.TrimPrefix(ts.URL, "http://")
 		}
 
@@ -248,7 +248,7 @@ func TestHandler(t *testing.T) {
 		}))
 		defer ts.Close()
 
-		dummyGetHost := func(bucket, endPoint string) string {
+		dummyGetHost := func(_, _ string) string {
 			return strings.TrimPrefix(ts.URL, "http://")
 		}
 
@@ -258,7 +258,7 @@ func TestHandler(t *testing.T) {
 			logger:    mlog.NewTestingLogger(t, os.Stderr),
 			cfg:       cfg,
 			getHostFn: dummyGetHost,
-			lookupAddrFn: func(addr string) ([]string, error) {
+			lookupAddrFn: func(_ string) ([]string, error) {
 				return []string{"1.1.1.1.test.foo.svc.cluster.local."}, nil
 			},
 			client: http.DefaultClient,
