@@ -2,6 +2,8 @@ module github.com/mattermost/bifrost
 
 go 1.22
 
+toolchain go1.22.1
+
 require (
 	github.com/gorilla/mux v1.8.1
 	github.com/kelseyhightower/envconfig v1.4.0
