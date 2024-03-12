@@ -1,16 +1,18 @@
 module github.com/mattermost/bifrost
 
-go 1.20
+go 1.22
+
+toolchain go1.22.1
 
 require (
-	github.com/gorilla/mux v1.8.0
+	github.com/gorilla/mux v1.8.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mattermost/mattermost-server/v5 v5.28.0
 	github.com/minio/minio-go/v7 v7.0.58
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.16.0
 	github.com/prometheus/client_model v0.4.0
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.4
 )
 
 require (
