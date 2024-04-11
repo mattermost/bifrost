@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/mattermost/mattermost-server/v5/mlog"
+	"github.com/mattermost/mattermost/server/public/shared/mlog"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 

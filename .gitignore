@@ -26,3 +26,6 @@ bifrost.log
 
 # Ignore dist files
 dist
+
+build/_output/
+
