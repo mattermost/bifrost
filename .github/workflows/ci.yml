@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   test:
@@ -12,6 +12,6 @@ jobs:
   push-docker:
     uses: ./.github/workflows/.docker-push.yml
     with:
-      is_pr: "${{ github.ref != 'refs/heads/main' }}"
+      is_pr: "${{ github.ref != 'refs/heads/master' }}"
     secrets: inherit
     needs: [test]
