@@ -15,7 +15,6 @@ linters-settings:
     enable-all: true
     disable:
     - fieldalignment
-    check-shadowing: true
 
 linters:
   disable-all: true

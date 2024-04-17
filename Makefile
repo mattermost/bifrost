@@ -33,7 +33,7 @@ LDFLAGS +="
 TEST_FLAGS ?= -v
 
 # Tools
-GOLANGCILINT_VER := v1.56.2
+GOLANGCILINT_VER := v1.57.2
 GOLANGCILINT := $(TOOLS_BIN_DIR)/$(GOLANGCILINT_BIN)
 
 TRIVY_SEVERITY := CRITICAL
@@ -139,7 +139,7 @@ check-style: govet lint
 ## Runs lint against all packages.
 lint: $(GOPATH)/bin/golangci-lint
 	@echo Running golangci-lint
-	golangci-lint run
+	golangci-lint run ./...
 
 ## Runs lint against all packages for changes only
 lint-changes: $(GOPATH)/bin/golangci-lint
