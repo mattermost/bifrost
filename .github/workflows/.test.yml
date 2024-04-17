@@ -6,6 +6,8 @@ on:
 jobs:
   check-style:
     runs-on: ubuntu-latest
+    env:
+      GOFLAGS: "-buildvcs=false"
     container:
       image: golang:1.22-bookworm
     steps:
