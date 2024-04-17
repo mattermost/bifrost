@@ -8,7 +8,6 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mattermost/mattermost-server/v5 v5.28.0
-	github.com/mattermost/mattermost/server/public v0.1.0
 	github.com/minio/minio-go/v7 v7.0.69
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.19.0
@@ -29,7 +28,6 @@ require (
 	github.com/klauspost/compress v1.17.8 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/mattermost/logr v1.0.13 // indirect
-	github.com/mattermost/logr/v2 v2.0.21 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
