@@ -53,7 +53,7 @@ build:
 		echo "Unknown architecture $(ARCH)"; \
 		exit 1; \
 	fi; \
-	env GOOS=linux $(GO) build -ldflags $(LDFLAGS) -gcflags all=-trimpath=$(PWD) -asmflags all=-trimpath=$(PWD) -a -installsuffix cgo -o build/_output/bin/$(APPNAME) ./cmd/$(APP)
+	env GOOS=linux $(GO) build -buildvcs=false -ldflags $(LDFLAGS) -gcflags all=-trimpath=$(PWD) -asmflags all=-trimpath=$(PWD) -a -installsuffix cgo -o build/_output/bin/$(APPNAME) ./cmd/$(APP)
 
 .PHONY: build-image
 build-image:  ## Build the docker image for Elrond
