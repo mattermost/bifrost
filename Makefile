@@ -1,10 +1,8 @@
 .PHONY: build check-style install run test verify-gomod
 
-GOLANG_VERSION := $(shell cat go.mod | grep "^go " | cut -d " " -f 2)
-
 ## Docker Build Versions
-DOCKER_BUILD_IMAGE = golang:$(GOLANG_VERSION)-alpine3.19
-DOCKER_BASE_IMAGE  = gcr.io/distroless/static:nonroot
+DOCKER_BUILD_IMAGE = golang:1.22-alpine3.19
+DOCKER_BASE_IMAGE = alpine:3.19
 
 # Build variables
 COMMIT_HASH  ?= $(shell git rev-parse HEAD)
@@ -22,6 +20,9 @@ APPNAME            := bifrost
 BIFROST_IMAGE_NAME ?= mattermost/$(APPNAME)
 BIFROST_IMAGE_TAG  ?= test
 BIFROST_IMAGE      ?= $(BIFROST_IMAGE_NAME):$(BIFROST_IMAGE_TAG)
+BUILD_TIME := $(shell date -u +%Y%m%d.%H%M%S)
+BUILD_HASH := $(shell git rev-parse HEAD)
+ARCH ?= amd64
 
 # Flags
 LDFLAGS :="
@@ -32,7 +33,7 @@ LDFLAGS +="
 TEST_FLAGS ?= -v
 
 # Tools
-GOLANGCILINT_VER := v1.56.2
+GOLANGCILINT_VER := v1.57.2
 GOLANGCILINT := $(TOOLS_BIN_DIR)/$(GOLANGCILINT_BIN)
 
 TRIVY_SEVERITY := CRITICAL
@@ -41,17 +42,82 @@ TRIVY_VULN_TYPE := os,library
 
 # Build for distribution
 build:
-	@echo Building Mattermost Bifrost
-	env GOOS=linux GOARCH=amd64 $(GO) build -ldflags $(LDFLAGS) -o $(APPNAME) ./cmd/$(APP)
+	@echo Building Mattermost Bifrost  for ARCH=$(ARCH)
+	@if [ "$(ARCH)" = "amd64" ]; then \
+		export GOARCH="amd64"; \
+	elif [ "$(ARCH)" = "arm64" ]; then \
+		export GOARCH="arm64"; \
+	elif [ "$(ARCH)" = "arm" ]; then \
+		export GOARCH="arm"; \
+	else \
+		echo "Unknown architecture $(ARCH)"; \
+		exit 1; \
+	fi; \
+	env GOOS=linux $(GO) build -buildvcs=false -ldflags $(LDFLAGS) -gcflags all=-trimpath=$(PWD) -asmflags all=-trimpath=$(PWD) -a -installsuffix cgo -o build/_output/bin/$(APPNAME) ./cmd/$(APP)
 
-.PHONE: buildx-image
-buildx-image:  ## Builds and pushes the docker image
-	DOCKERFILE_PATH=build/Dockerfile BUILD_IMAGE=$(DOCKER_BUILD_IMAGE) BASE_IMAGE=$(DOCKER_BASE_IMAGE) IMAGE_NAME=$(BIFROST_IMAGE) ./scripts/build_image.sh buildx
+.PHONY: build-image
+build-image:  ## Build the docker image for Elrond
+	@echo Building Elrond Docker Image
+	@if [ -z "$(DOCKER_USERNAME)" ] || [ -z "$(DOCKER_PASSWORD)" ]; then \
+		echo "DOCKER_USERNAME and/or DOCKER_PASSWORD not set. Skipping Docker login."; \
+	else \
+		echo $(DOCKER_PASSWORD) | docker login --username $(DOCKER_USERNAME) --password-stdin; \
+	fi
+	docker buildx build \
+	--platform linux/arm64,linux/amd64 \
+	--build-arg DOCKER_BUILD_IMAGE=$(DOCKER_BUILD_IMAGE) \
+	--build-arg DOCKER_BASE_IMAGE=$(DOCKER_BASE_IMAGE) \
+	. -f build/Dockerfile -t $(BIFROST_IMAGE) \
+	--no-cache \
+	--push
 
-.PHONE: build-image
-build-image:  ## Build the docker image
-	DOCKERFILE_PATH=build/Dockerfile BUILD_IMAGE=$(DOCKER_BUILD_IMAGE) BASE_IMAGE=$(DOCKER_BASE_IMAGE) IMAGE_NAME=$(BIFROST_IMAGE) ./scripts/build_image.sh local
+.PHONY: build-image-with-tag
+build-image-with-tag:  ## Build the docker image for elrond
+	@echo Building Elrond Docker Image
+	@if [ -z "$(DOCKER_USERNAME)" ] || [ -z "$(DOCKER_PASSWORD)" ]; then \
+		echo "DOCKER_USERNAME and/or DOCKER_PASSWORD not set. Skipping Docker login."; \
+	else \
+		echo $(DOCKER_PASSWORD) | docker login --username $(DOCKER_USERNAME) --password-stdin; \
+	fi
+	: $${TAG:?}
+	docker buildx build \
+	--platform linux/arm64,linux/amd64 \
+	--build-arg DOCKER_BUILD_IMAGE=$(DOCKER_BUILD_IMAGE) \
+	--build-arg DOCKER_BASE_IMAGE=$(DOCKER_BASE_IMAGE) \
+	. -f build/Dockerfile -t $(BIFROST_IMAGE) -t $(BIFROST_IMAGE_NAME):${TAG} \
+	--push
 
+.PHONY: build-image-locally
+build-image-locally:  ## Build the docker image for cloud-thanos-store-discovery
+	@echo Building Biforst Docker Image
+	@if [ -z "$(DOCKER_USERNAME)" ] || [ -z "$(DOCKER_PASSWORD)" ]; then \
+		echo "DOCKER_USERNAME and/or DOCKER_PASSWORD not set. Skipping Docker login."; \
+	else \
+		echo $(DOCKER_PASSWORD) | docker login --username $(DOCKER_USERNAME) --password-stdin; \
+	fi
+	docker buildx build \
+    --platform linux/arm64 \
+	--build-arg DOCKER_BUILD_IMAGE=$(DOCKER_BUILD_IMAGE) \
+	--build-arg DOCKER_BASE_IMAGE=$(DOCKER_BASE_IMAGE) \
+	. -f build/Dockerfile -t $(BIFROST_IMAGE) \
+	--no-cache \
+	--load
+
+.PHONY: scan
+scan:
+	docker scout cves $(BIFROST_IMAGE)
+
+.PHONY: push-image-pr
+push-image-pr:
+	@echo Push Image PR
+	./scripts/push-image-pr.sh
+
+.PHONY: push-image
+push-image:
+	@echo Push Image
+	./scripts/push-image.sh
+
+.PHONY: install
 # Build and install for the current platform
 install:
 	$(GO) install -ldflags $(LDFLAGS) ./cmd/$(APP)
@@ -67,18 +133,25 @@ unittest:
 
 ## Runs govet and gofmt against all packages.
 .PHONY: check-style
-check-style: lint
+check-style: govet lint
 	@echo Checking for style guide compliance
 
 ## Runs lint against all packages.
 lint: $(GOPATH)/bin/golangci-lint
 	@echo Running golangci-lint
-	golangci-lint run
+	golangci-lint run ./...
 
 ## Runs lint against all packages for changes only
 lint-changes: $(GOPATH)/bin/golangci-lint
 	@echo Running golangci-lint over changes only
 	golangci-lint run -n
+
+## Runs govet against all packages.
+.PHONY: govet
+govet:
+	@echo Running govet
+	$(GO) vet ./...
+	@echo Govet success
 
 # Check modules
 verify-gomod:
