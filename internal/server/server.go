@@ -74,6 +74,13 @@ func New(cfg Config) *Server {
 		},
 	}
 
+	var creds *credentials.Credentials
+	if cfg.S3Settings.AccessKeyID == "" && cfg.S3Settings.SecretAccessKey == "" {
+		creds = credentials.NewIAM("")
+	} else {
+		creds = credentials.NewStatic(cfg.S3Settings.AccessKeyID, cfg.S3Settings.SecretAccessKey, "", credentials.SignatureV4)
+	}
+
 	s := &Server{
 		srv:    server,
 		client: client,
@@ -87,7 +94,7 @@ func New(cfg Config) *Server {
 			FileLocation:  cfg.LogSettings.FileLocation,
 		}),
 		cfg:     cfg,
-		creds:   credentials.NewStatic(cfg.S3Settings.AccessKeyID, cfg.S3Settings.SecretAccessKey, "", credentials.SignatureV4),
+		creds:   creds,
 		metrics: newMetrics(),
 	}
 

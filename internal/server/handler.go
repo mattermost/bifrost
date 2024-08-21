@@ -96,10 +96,14 @@ func (s *Server) handler() http.HandlerFunc {
 		}
 
 		// Need to sign the header, just before sending it
-		r = signer.SignV4(*r, s.cfg.S3Settings.AccessKeyID,
-			s.cfg.S3Settings.SecretAccessKey,
-			val.SessionToken,
-			s.cfg.S3Settings.Region)
+		if s.cfg.S3Settings.AccessKeyID == "" && s.cfg.S3Settings.SecretAccessKey == "" {
+			r = signer.SignV4(*r, val.AccessKeyID, val.SecretAccessKey, val.SessionToken, s.cfg.S3Settings.Region)
+		} else {
+			r = signer.SignV4(*r, s.cfg.S3Settings.AccessKeyID,
+				s.cfg.S3Settings.SecretAccessKey,
+				val.SessionToken,
+				s.cfg.S3Settings.Region)
+		}
 
 		resp, err := s.client.Do(r)
 		if err != nil {
