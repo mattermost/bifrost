@@ -134,10 +134,7 @@ func (s *Server) getHost(bucket, endPoint string) string {
 }
 
 func (s *Server) isUsingIAMRoleCredentials() bool {
-	if s.cfg.S3Settings.AccessKeyID == "" && s.cfg.S3Settings.SecretAccessKey == "" {
-		return true
-	}
-	return false
+	return s.cfg.S3Settings.AccessKeyID == "" && s.cfg.S3Settings.SecretAccessKey == ""
 }
 
 func (s *Server) writeError(w http.ResponseWriter, sourceErr error) {
