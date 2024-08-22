@@ -74,13 +74,6 @@ func New(cfg Config) *Server {
 		},
 	}
 
-	var creds *credentials.Credentials
-	if cfg.S3Settings.AccessKeyID == "" && cfg.S3Settings.SecretAccessKey == "" {
-		creds = credentials.NewIAM("")
-	} else {
-		creds = credentials.NewStatic(cfg.S3Settings.AccessKeyID, cfg.S3Settings.SecretAccessKey, "", credentials.SignatureV4)
-	}
-
 	s := &Server{
 		srv:    server,
 		client: client,
@@ -94,7 +87,7 @@ func New(cfg Config) *Server {
 			FileLocation:  cfg.LogSettings.FileLocation,
 		}),
 		cfg:     cfg,
-		creds:   creds,
+		creds:   credentials.NewStatic(cfg.S3Settings.AccessKeyID, cfg.S3Settings.SecretAccessKey, "", credentials.SignatureV4),
 		metrics: newMetrics(),
 	}
 
@@ -109,6 +102,10 @@ func New(cfg Config) *Server {
 		}
 		serviceMux.HandleFunc("/health", s.healthHandler).Methods("GET")
 		serviceMux.Handle("/metrics", s.metrics.metricsHandler())
+	}
+
+	if s.isUsingIAMRoleCredentials() {
+		s.creds = credentials.NewIAM("")
 	}
 
 	s.getHostFn = s.getHost
