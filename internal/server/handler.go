@@ -95,6 +95,11 @@ func (s *Server) handler() http.HandlerFunc {
 			return
 		}
 
+		if s.isUsingIAMRoleCredentials() {
+			s.cfg.S3Settings.AccessKeyID = val.AccessKeyID
+			s.cfg.S3Settings.SecretAccessKey = val.SecretAccessKey
+		}
+
 		// Need to sign the header, just before sending it
 		r = signer.SignV4(*r, s.cfg.S3Settings.AccessKeyID,
 			s.cfg.S3Settings.SecretAccessKey,
@@ -126,6 +131,10 @@ func (s *Server) handler() http.HandlerFunc {
 
 func (s *Server) getHost(bucket, endPoint string) string {
 	return bucket + "." + endPoint
+}
+
+func (s *Server) isUsingIAMRoleCredentials() bool {
+	return s.cfg.S3Settings.AccessKeyID == "" && s.cfg.S3Settings.SecretAccessKey == ""
 }
 
 func (s *Server) writeError(w http.ResponseWriter, sourceErr error) {

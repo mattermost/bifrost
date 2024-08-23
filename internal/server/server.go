@@ -104,6 +104,10 @@ func New(cfg Config) *Server {
 		serviceMux.Handle("/metrics", s.metrics.metricsHandler())
 	}
 
+	if s.isUsingIAMRoleCredentials() {
+		s.creds = credentials.NewIAM("")
+	}
+
 	s.getHostFn = s.getHost
 	s.lookupAddrFn = net.LookupAddr
 	s.srv.Handler = s.withRecovery(s.handler())
