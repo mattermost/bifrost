@@ -27,17 +27,28 @@ var regCred = regexp.MustCompile("Credential=([A-Za-z0-9]+)/([0-9]+)/")
 // regCred matches signature string in HTTP header
 var regSign = regexp.MustCompile("Signature=([[0-9a-f]+)")
 
-type MockIAMCredentialsProvider struct{}
+type MockIAMCredentialsProvider struct {
+	isExpired bool
+	accessKey string
+	secretKey string
+}
 
 func (m *MockIAMCredentialsProvider) Retrieve() (credentials.Value, error) {
+	if m.isExpired {
+		m.isExpired = false
+		return credentials.Value{
+			AccessKeyID:     "newMockedAccessKeyID",
+			SecretAccessKey: "newMockedSecret",
+		}, nil
+	}
 	return credentials.Value{
-		AccessKeyID:     "mockedAccessKeyID",
-		SecretAccessKey: "mockedSecret",
+		AccessKeyID:     m.accessKey,
+		SecretAccessKey: m.secretKey,
 	}, nil
 }
 
 func (m *MockIAMCredentialsProvider) IsExpired() bool {
-	return false // Assume the mocked credentials are never expired
+	return m.isExpired
 }
 
 func TestHandlerUsingIAMRole(t *testing.T) {
@@ -50,8 +61,14 @@ func TestHandlerUsingIAMRole(t *testing.T) {
 		},
 	}
 
+	mockProvider := &MockIAMCredentialsProvider{
+		isExpired: false,
+		accessKey: "mockedAccessKeyID",
+		secretKey: "mockedSecret",
+	}
+
 	t.Run("normal response", func(t *testing.T) {
-		creds := credentials.New(&MockIAMCredentialsProvider{})
+		creds := credentials.New(mockProvider)
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// We test that the bucket name is stripped.
 			assert.Equal(t, "/foo", r.URL.Path)
@@ -60,6 +77,88 @@ func TestHandlerUsingIAMRole(t *testing.T) {
 
 			// Get the credentials
 			val, _ := creds.Get()
+
+			if val.AccessKeyID != "mockedAccessKeyID" {
+				t.Errorf("expected current access key, got: %s", val.AccessKeyID)
+			}
+
+			// Validate request headers
+			authHeader := r.Header.Get("Authorization")
+			date := r.Header.Get("X-Amz-Date")
+
+			assert.True(t, strings.HasPrefix(authHeader, "AWS4-HMAC-SHA256"), "unexpected prefix for Authorization header: %s", authHeader)
+			assert.True(t, strings.HasPrefix(date, now.Format("20060102")), "unexpected prefix for X-Amz-Date header: %s", date)
+
+			matches := regCred.FindStringSubmatch(authHeader)
+			require.Len(t, matches, 3, "unexpected number of matches")
+			assert.Equal(t, val.AccessKeyID, matches[1], "unexpected access key")
+			assert.Equal(t, now.Format("20060102"), matches[2], "unexpected date value")
+
+			matches = regSign.FindStringSubmatch(authHeader)
+			require.Len(t, matches, 2, "unexpected number of matches")
+
+			w.Header().Set("Content-Type", "application/xml")
+			w.Header().Set("Date", now.Format(time.RFC1123))
+			w.Header().Set("Last-Modified", now.Format(time.RFC1123))
+			w.Header().Set("Server", "Asgard")
+			w.Header().Set("X-Amz-Bucket-Region", cfg.S3Settings.Region)
+			w.Header().Set("X-Amz-Id-2", "id")
+			w.Header().Set("X-Amz-Request-Id", "reqId")
+
+			fmt.Fprintln(w, "Welcome to the realm eternal")
+		}))
+		defer ts.Close()
+
+		dummyGetHost := func(_, _ string) string {
+			return strings.TrimPrefix(ts.URL, "http://")
+		}
+
+		s := &Server{
+			logger:    mlog.NewTestingLogger(t, os.Stderr),
+			cfg:       cfg,
+			getHostFn: dummyGetHost,
+			client:    http.DefaultClient,
+			creds:     creds,
+			metrics:   newMetrics(),
+		}
+
+		req := httptest.NewRequest("GET", "http://example.com/"+cfg.S3Settings.Bucket+"/foo", nil)
+		w := httptest.NewRecorder()
+
+		s.handler()(w, req)
+
+		resp := w.Result()
+		defer resp.Body.Close()
+		io.Copy(io.Discard, resp.Body)
+
+		// Verify response headers
+		assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
+		assert.Equal(t, "application/xml", resp.Header.Get("Content-Type"), "unexpected content type")
+		assert.Equal(t, "Asgard", resp.Header.Get("Server"), "unexpected server")
+		assert.Equal(t, cfg.S3Settings.Region, resp.Header.Get("X-Amz-Bucket-Region"), "unexpected region")
+		assert.Equal(t, "id", resp.Header.Get("X-Amz-Id-2"), "unexpected id")
+		assert.Equal(t, "reqId", resp.Header.Get("X-Amz-Request-Id"), "unexpected request id")
+		assert.NotEmpty(t, resp.Header.Get("Date"), "empty date")
+		assert.NotEmpty(t, resp.Header.Get("Last-Modified"), "empty last-modified")
+	})
+
+	t.Run("normal response with expired AWS credentials", func(t *testing.T) {
+		mockProvider.isExpired = true
+		mockProvider.accessKey = "newMockedAccessKeyID"
+		mockProvider.secretKey = "newMockedSecret"
+		creds := credentials.New(mockProvider)
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// We test that the bucket name is stripped.
+			assert.Equal(t, "/foo", r.URL.Path)
+
+			now := time.Now()
+
+			// Get the credentials
+			val, _ := creds.Get()
+
+			if val.AccessKeyID != "newMockedAccessKeyID" {
+				t.Errorf("expected refreshed access key, got: %s", val.AccessKeyID)
+			}
 
 			// Validate request headers
 			authHeader := r.Header.Get("Authorization")

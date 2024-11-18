@@ -88,6 +88,11 @@ func (s *Server) handler() http.HandlerFunc {
 
 		s.logger.Debug("received request", mlog.String("method", r.Method), mlog.String("url", originalURL.String()), mlog.String("target_url", targetURL.String()))
 
+		// Force Refresh if credentials are expired.
+		if s.creds.IsExpired() {
+			s.creds.Expire()
+		}
+
 		// Get credentials.
 		val, err := s.creds.Get()
 		if err != nil {
