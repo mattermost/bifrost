@@ -36,7 +36,7 @@ jobs:
     - name: ci/checkout-repo
       uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
     - name: ci/anchore-scan
-      uses: mattermost/actions/delivery/anchore-scan@main
+      uses: mattermost/actions/delivery/anchore-scan@003fac68730de6e3e2dc31939e7f2c460f2a8ba0
       with:
         image_name: "mattermost/bifrost:${{ github.ref_name }}"
         dockerfile_path: ./build/Dockerfile
